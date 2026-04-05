@@ -1,0 +1,129 @@
+name: paper-formatter-v1
+version: "1.0.0"
+description: >
+  An OpenEnv environment where AI agents learn to reformat academic research papers
+  between conference and journal submission formats (IEEE, ACM, NeurIPS, ICML, AAAI, arXiv).
+  The agent must identify formatting violations and apply targeted actions to bring the
+  paper into full compliance with the target conference's style guide.
+
+domain: academic_publishing
+tags:
+  - openenv
+  - nlp
+  - document-formatting
+  - academic
+  - real-world
+
+authors:
+  - name: Paper Formatter Team
+    email: team@example.com
+
+license: Apache-2.0
+
+observation_space:
+  type: structured
+  description: >
+    A PaperObservation object describing the paper's current formatting state,
+    including sections, references, authors, abstract word count, column layout,
+    citation style, compliance score, and list of open formatting issues.
+  fields:
+    paper_id: string
+    paper_title: string
+    current_format: enum[IEEE, ACM, NeurIPS, ICML, AAAI, arXiv]
+    target_format: enum[IEEE, ACM, NeurIPS, ICML, AAAI, arXiv]
+    target_spec: FormatSpec
+    sections: list[Section]
+    section_order: list[string]
+    references: list[Reference]
+    authors: list[AuthorInfo]
+    abstract_word_count: integer
+    column_layout: integer
+    title_case_style: string
+    citation_style: enum[numeric, author_year]
+    compliance_score: float[0.0, 1.0]
+    issues: list[string]
+    fixed_issues: list[string]
+    steps_taken: integer
+    max_steps: integer
+    done: boolean
+
+action_space:
+  type: structured
+  description: >
+    Discrete action type with typed parameters. Agent selects an action_type
+    and provides a parameters dict with the relevant formatting change.
+  actions:
+    - set_format
+    - rename_section
+    - reorder_sections
+    - format_references
+    - set_title_case
+    - set_abstract_word_limit
+    - remove_section
+    - add_section
+    - format_author_list
+    - set_column_layout
+    - format_citations
+    - submit
+
+reward:
+  type: continuous
+  range: [0.0, 1.0]
+  description: >
+    Composite reward with partial credit across 6 dimensions:
+    section structure (30%), reference format (20%), abstract compliance (15%),
+    author format (15%), layout (10%), citation style (10%).
+    Small step penalty to encourage efficiency.
+
+tasks:
+  - id: task_easy
+    name: "NeurIPS to IEEE Conversion"
+    difficulty: easy
+    max_steps: 8
+    success_threshold: 0.85
+    description: >
+      Convert a NeurIPS-formatted paper to IEEE style.
+      Fix abstract length (≤150 words), switch to 2-column layout,
+      convert citations to numeric style, and update reference formatting.
+
+  - id: task_medium
+    name: "ACM Systems to NeurIPS Conversion"
+    difficulty: medium
+    max_steps: 12
+    success_threshold: 0.80
+    description: >
+      Convert an ACM systems paper to NeurIPS format.
+      Fix abbreviated author names, remove numeric section prefixes,
+      merge duplicate Related Work sections, switch to single-column layout,
+      convert to author-year citations.
+
+  - id: task_hard
+    name: "IEEE to ICML Full Reformat"
+    difficulty: hard
+    max_steps: 15
+    success_threshold: 0.75
+    description: >
+      Full reformat from IEEE to ICML.
+      Fix ALL-CAPS title, IEEE section naming (roman numerals),
+      abbreviated author names, numeric citations, IEEE reference style,
+      and section ordering — 7+ distinct issues to resolve.
+
+endpoints:
+  reset: POST /reset
+  step: POST /step
+  state: GET /state
+  health: GET /health
+  action_space: GET /action_space
+  tasks: GET /tasks
+
+docker:
+  build: docker build -t paper-formatter-env .
+  run: docker run -p 7860:7860 paper-formatter-env
+
+huggingface:
+  space: paper-formatter-openenv
+  sdk: docker
+  tags:
+    - openenv
+    - paper-formatting
+    - rl-environment
