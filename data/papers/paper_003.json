@@ -1,0 +1,106 @@
+{
+  "id": "paper_003",
+  "title": "UnifiedLM: Scaling Multi-Task Language Models with Adaptive Gradient Balancing",
+  "source": "arxiv:synthetic_003",
+  "license": "CC-BY 4.0",
+  "difficulty_score": 0.8,
+  "sections": {
+    "abstract": "We present UnifiedLM, a large-scale multi-task language model trained on 23 diverse NLP tasks simultaneously. UnifiedLM-3B achieves an average improvement of 4.7% over single-task baselines across all evaluated tasks. On SuperGLUE, UnifiedLM scores 91.2, surpassing human performance (89.8) by 1.4 points. Our adaptive gradient balancing (AGB) algorithm dynamically reweights task gradients to prevent dominated tasks from collapsing. We train models at three scales: 350M, 1B, and 3B parameters.",
+    "introduction": "Multi-task learning (MTL) in NLP seeks to share representations across tasks, improving data efficiency and generalisation. Classic challenges include negative transfer [1] and gradient conflict between tasks [2]. We introduce UnifiedLM and the AGB algorithm. Contributions: (1) AGB — an adaptive gradient balancing algorithm that provably reduces gradient conflict in MTL settings, (2) a unified training protocol across 23 NLP tasks without task-specific hyperparameter tuning, (3) state-of-the-art SuperGLUE results at the 3B parameter scale. UnifiedLM-3B achieves 91.2 on SuperGLUE.",
+    "methods": "UnifiedLM is based on a T5 [3] encoder-decoder backbone. We train on 23 tasks from the FLAN collection [4] and additional tasks from PromptSource [5]. The AGB algorithm computes per-task gradient norms at each step and reweights gradients to equalise their magnitudes. Specifically, for K tasks, task k receives weight w_k = median_norm / ||g_k||. This prevents any single task from dominating the shared parameter updates. Models are trained at three scales: 350M, 1B, and 3B parameters. Training uses Adafactor with a learning rate of 5e-4 for 500,000 steps.",
+    "results": "Table 1 shows SuperGLUE results. UnifiedLM-3B achieves 91.2. Table 2 compares average improvement over single-task baselines across all 23 tasks. UnifiedLM-3B improves by 3.9% on average — a significant and consistent gain across task families. Table 3 ablates the AGB algorithm. Removing AGB reduces SuperGLUE score by 2.3 points (from 91.2 to 88.9). Replacing AGB with PCGrad [2] gives 90.1, confirming AGB's superiority. At the 1B scale, UnifiedLM scores 88.4 on SuperGLUE. Figure 1 shows gradient conflict reduction over training steps.",
+    "discussion": "AGB's provable gradient conflict reduction translates to consistent accuracy gains. The 3B model is our strongest, but the 1B model offers a better efficiency-accuracy trade-off. One limitation is the computational overhead of computing per-task gradient norms at each step, adding approximately 8% to training time. Future work will explore second-order AGB variants and extension to vision-language tasks.",
+    "references": "[1] Crawshaw (2020). Multi-Task Learning with Deep Neural Networks. arXiv.\n[2] Yu et al. (2020). Gradient Surgery for Multi-Task Learning. NeurIPS.\n[3] Raffel et al. (2020). Exploring the Limits of Transfer Learning with T5. JMLR.\n[4] Wei et al. (2022). Finetuned Language Models Are Zero-Shot Learners. ICLR.\n[5] Bach et al. (2022). PromptSource. ACL."
+  },
+  "tables": {
+    "Table 1": {
+      "caption": "Table 1: SuperGLUE benchmark results.",
+      "data": {
+        "UnifiedLM-350M": "85.3",
+        "UnifiedLM-1B": "88.4",
+        "UnifiedLM-3B": "91.2",
+        "Human baseline": "89.8",
+        "T5-11B": "90.3"
+      }
+    },
+    "Table 2": {
+      "caption": "Table 2: Average improvement over single-task baselines (23 tasks).",
+      "data": {
+        "UnifiedLM-350M": "+2.1%",
+        "UnifiedLM-1B": "+3.2%",
+        "UnifiedLM-3B": "+3.9%"
+      }
+    },
+    "Table 3": {
+      "caption": "Table 3: Ablation of gradient balancing algorithm.",
+      "data": {
+        "UnifiedLM-3B (full)": "91.2",
+        "w/o AGB": "88.9",
+        "w/ PCGrad": "90.1"
+      }
+    }
+  },
+  "figures": {
+    "Figure 1": {
+      "caption": "Figure 1: Gradient conflict (cosine similarity) over training.",
+      "type": "line_chart"
+    }
+  },
+  "ground_truth": {
+    "task1_violations": [
+      {
+        "rule": "abstract_max_words",
+        "actual": 118,
+        "limit": 100
+      },
+      {
+        "rule": "citation_format_ieee",
+        "note": "Uses [N] inline but references not IEEE formatted"
+      }
+    ],
+    "task2_inconsistencies": [
+      {
+        "id": "IC_001",
+        "type": "number_mismatch",
+        "location_a": "abstract",
+        "claim_a": "average improvement of 4.7% over single-task baselines",
+        "location_b": "results",
+        "claim_b": "UnifiedLM-3B improves by 3.9% on average",
+        "injected": false,
+        "note": "Abstract says 4.7% but results and Table 2 say 3.9%"
+      },
+      {
+        "id": "IC_002",
+        "type": "contribution_count",
+        "location_a": "introduction",
+        "claim_a": "three contributions listed in introduction",
+        "location_b": "abstract",
+        "claim_b": "abstract does not enumerate contributions",
+        "injected": false,
+        "note": "Intro lists 3 contributions; verify methods covers all 3"
+      }
+    ],
+    "task3_discrepancies": [
+      {
+        "id": "D_001",
+        "type": "table_text_mismatch",
+        "text_location": "abstract",
+        "text_claim": "average improvement of 4.7% over single-task baselines",
+        "table_id": "Table 2",
+        "table_value": "+3.9%",
+        "injected": true,
+        "note": "Abstract says 4.7%, Table 2 shows 3.9% for UnifiedLM-3B"
+      },
+      {
+        "id": "D_002",
+        "type": "table_text_mismatch",
+        "text_location": "results",
+        "text_claim": "UnifiedLM-3B improves by 3.9% on average",
+        "table_id": "Table 2",
+        "table_value": "+3.9%",
+        "injected": false,
+        "note": "CONSISTENT — control; should NOT be reported"
+      }
+    ]
+  }
+}

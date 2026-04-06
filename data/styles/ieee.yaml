@@ -1,0 +1,48 @@
+# data/styles/ieee.yaml — IEEE Transactions style rules for ScholarEnv
+# Used by FormattingGrader to expose style config in observations.
+
+name: IEEE Transactions
+version: "2024"
+
+structure:
+  title_max_words: 15
+  abstract_min_words: 150
+  abstract_max_words: 250
+  abstract_no_citations: true
+  required_sections:
+    - abstract
+    - introduction
+    - methods
+    - results
+    - discussion
+    - references
+  section_order_enforced: true
+
+word_limits:
+  introduction: 800
+  methods: 1200
+  results: 1000
+  discussion: 800
+
+citations:
+  in_text_format: "[N]"            # e.g. [1], [2,3]
+  no_author_year: true             # (Author, Year) style is invalid
+  references_must_be_numbered: true
+
+figures:
+  caption_format: "Fig. N."        # Fig. 1. Description.
+  min_coverage: 0.80               # 80% of fig refs must follow format
+
+tables:
+  caption_format: "Table N:"       # Table 1: Description.
+  min_coverage: 0.80
+
+author_block:
+  required: true
+  format: "Firstname Lastname, Affiliation"
+
+keywords:
+  required: true
+  section_label: "Index Terms"     # IEEE uses "Index Terms" not "Keywords"
+  min_count: 3
+  max_count: 8
