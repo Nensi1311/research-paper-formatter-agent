@@ -20,14 +20,18 @@ import os
 import sys
 import textwrap
 from typing import Any, Dict, List, Optional
-
 from openai import OpenAI
-
-# Import environment directly (for local execution)
-# When using Docker / HF Space, swap with HTTP client calls to /reset, /step
 from environment import PaperFormatterEnv
 from models import PaperAction, ActionType, PaperObservation
 from tasks import list_tasks
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  
+
+
 
 # ──────────────────────────────────────────────
 # Config
