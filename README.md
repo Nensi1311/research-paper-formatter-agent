@@ -1,7 +1,7 @@
 ---
 title: Research Paper Formatter — OpenEnv
 emoji: 📄
-colorFrom: orange
+colorFrom: red
 colorTo: red
 sdk: docker
 app_port: 7860
