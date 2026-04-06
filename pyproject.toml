@@ -7,7 +7,7 @@ name = "paper-formatter-v1"
 version = "1.0.0"
 description = "An OpenEnv environment where AI agents learn to reformat academic research papers between conference and journal submission formats (IEEE, ACM, NeurIPS, ICML, AAAI, arXiv)."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {text = "Apache-2.0"}
 authors = [
     {name = "Paper Formatter Team", email = "team@example.com"}
@@ -22,15 +22,20 @@ dependencies = [
     "fastapi==0.115.5",
     "uvicorn[standard]==0.32.1",
     "pydantic==2.10.3",
-    "openai==1.57.2",
+    "openai",
     "httpx==0.28.1",
     "pyyaml==6.0.2",
     "python-dotenv==1.0.1",
+    "openenv-core>=0.2.0",
 ]
+
+[project.scripts]
+server = "server.app:main"
 
 [project.urls]
 "Homepage" = "https://huggingface.co/spaces/Nensi1311/research-paper-formatter-agent"
 "Bug Tracker" = "https://huggingface.co/spaces/Nensi1311/research-paper-formatter-agent/issues"
 
 [tool.setuptools]
-py-modules = ["server", "environment", "models", "grader", "tasks", "paper_data", "conference_specs", "client", "inference"]
+py-modules = ["environment", "models", "grader", "tasks", "paper_data", "conference_specs", "client", "inference"]
+packages = ["server"]

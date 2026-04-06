@@ -22,6 +22,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source
 COPY --chown=appuser:appuser . .
 
+# Install the project to make [project.scripts] available
+RUN pip install --no-cache-dir .
+
 USER appuser
 
 # HF Spaces uses port 7860
@@ -32,4 +35,4 @@ EXPOSE 7860
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:7860/health || exit 1
 
-CMD ["python", "server.py"]
+CMD ["server"]

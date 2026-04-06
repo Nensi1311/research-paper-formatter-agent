@@ -6,6 +6,7 @@ Endpoints: POST /reset, POST /step, GET /state, GET /health, GET /tasks
 from __future__ import annotations
 
 import os
+import sys
 from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Query
@@ -13,6 +14,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 import uvicorn
 from pydantic import BaseModel
+
+# Ensure root directory is in sys.path for relative imports when run as a script
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from models import PaperAction, ActionType
 from environment import PaperFormatterEnv
@@ -266,6 +270,11 @@ async def action_space():
     }
 
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for the server script."""
     port = int(os.environ.get("PORT", 7860))
-    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=False)
+    uvicorn.run("server.app:app", host="0.0.0.0", port=port, reload=False)
+
+
+if __name__ == "__main__":
+    main()
