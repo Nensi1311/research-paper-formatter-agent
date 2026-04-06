@@ -4,13 +4,12 @@ emoji: 📄
 colorFrom: orange
 colorTo: red
 sdk: docker
+app_port: 7860
 pinned: false
 tags:
   - openenv
   - paper-formatting
   - rl-environment
-  - academic-publishing
-  - nlp
 license: apache-2.0
 ---
 
@@ -180,7 +179,7 @@ GET  /docs           → Swagger UI
 ### Local
 
 ```bash
-git clone https://huggingface.co/spaces/your-username/paper-formatter-openenv
+git clone https://huggingface.co/spaces/Nensi1311/research-paper-formatter-agent
 pip install -r requirements.txt
 python server.py
 ```
@@ -246,6 +245,6 @@ paper-formatter-openenv/
   title={Research Paper Formatter: An OpenEnv Environment for Academic Document Reformatting},
   year={2025},
   publisher={HuggingFace Spaces},
-  url={https://huggingface.co/spaces/your-username/paper-formatter-openenv}
+  url={https://huggingface.co/spaces/Nensi1311/research-paper-formatter-agent}
 }
 ```
