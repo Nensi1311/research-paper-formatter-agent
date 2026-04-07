@@ -7,9 +7,9 @@
   "sections": {
     "abstract": "We introduce DenseVision, an efficient architecture for dense prediction tasks including semantic segmentation and depth estimation. DenseVision employs hierarchical feature aggregation across four resolution scales, achieving mIoU of 56.2 on the ADE20K dataset while running at 47 frames per second on a single NVIDIA RTX 3090. Compared to prior efficient methods, our model reduces memory consumption by 38% while maintaining competitive accuracy. We evaluate on three benchmarks: ADE20K, Cityscapes, and NYU-Depth-v2.",
     "introduction": "Dense prediction tasks require per-pixel understanding of scene content. Semantic segmentation assigns a class label to every pixel [1], while monocular depth estimation predicts a continuous depth map [2]. State-of-the-art methods such as SegFormer [3] and BEiT [4] achieve high accuracy but are computationally expensive. We propose DenseVision, designed for real-time inference. Our contributions: (1) a hierarchical feature pyramid that aggregates multi-scale context efficiently, (2) a lightweight attention mechanism that reduces quadratic complexity to linear, (3) a joint training protocol for segmentation and depth simultaneously, and (4) comprehensive benchmarks across three standard datasets. The model runs at 47 fps, meeting real-time constraints for autonomous driving.",
-    "methods": "DenseVision consists of a MobileNetV3 backbone followed by four aggregation stages at stride 4, 8, 16, and 32. Each stage produces a feature map that is upsampled and summed with the preceding level. The lightweight attention module decomposes the attention matrix into two low-rank factors, achieving O(n) complexity. The joint loss combines cross-entropy for segmentation and scale-invariant log-RMSE for depth, weighted 0.7:0.3. We train for 160,000 iterations with batch size 16 on 4 A100 GPUs. Learning rate follows a poly schedule from 6e-5 to 0. Data augmentation includes random horizontal flip, random crop to 512×512, and colour jitter.",
-    "results": "Table 1 reports semantic segmentation results on ADE20K. DenseVision achieves mIoU of 54.8 — competitive with SegFormer-B2 (51.8) while running 3.2× faster. Table 2 reports depth estimation results on NYU-Depth-v2. Our model achieves delta1 accuracy of 0.921 and RMSE of 0.341. Table 3 shows inference speed vs. accuracy on Cityscapes. DenseVision achieves 78.3 mIoU at 47 fps. Compared to prior efficient models, memory usage is reduced by 38%. The parameter count is 31.2 million, substantially smaller than SegFormer-B5 (82M).",
-    "discussion": "DenseVision demonstrates that hierarchical aggregation without heavy attention is sufficient for competitive dense prediction. The 0.7:0.3 joint loss weighting was found empirically — adjusting to 0.5:0.5 degraded segmentation by 1.1 mIoU while improving depth RMSE by 0.012. The linear attention approximation introduces a small accuracy gap (0.3 mIoU) but enables real-time inference. Limitations: the joint training may not generalise to all dense prediction tasks.",
+    "methods": "DenseVision consists of a MobileNetV3 backbone followed by four aggregation stages at stride 4, 8, 16, and 32. Each stage produces a feature map that is upsampled and summed with the preceding level. The lightweight attention module decomposes the attention matrix into two low-rank factors, achieving O(n) complexity. The joint loss combines cross-entropy for segmentation and scale-invariant log-RMSE for depth, weighted 0.7:0.3. We train for 160,000 iterations with batch size 16 on 4 A100 GPUs. Learning rate follows a poly schedule from 6e-5 to 0. Data augmentation includes random horizontal flip, random crop to 512\u00c3\u2014512, and colour jitter.",
+    "results": "Table 1 reports semantic segmentation results on ADE20K. DenseVision achieves mIoU of 54.8 \u00e2\u20ac\u201d competitive with SegFormer-B2 (51.8) while running 3.2\u00c3\u2014 faster. Table 2 reports depth estimation results on NYU-Depth-v2. Our model achieves delta1 accuracy of 0.921 and RMSE of 0.341. Table 3 shows inference speed vs. accuracy on Cityscapes. DenseVision achieves 78.3 mIoU at 47 fps. Compared to prior efficient models, memory usage is reduced by 38%. The parameter count is 31.2 million, substantially smaller than SegFormer-B5 (82M).",
+    "discussion": "DenseVision demonstrates that hierarchical aggregation without heavy attention is sufficient for competitive dense prediction. The 0.7:0.3 joint loss weighting was found empirically \u00e2\u20ac\u201d adjusting to 0.5:0.5 degraded segmentation by 1.1 mIoU while improving depth RMSE by 0.012. The linear attention approximation introduces a small accuracy gap (0.3 mIoU) but enables real-time inference. Limitations: the joint training may not generalise to all dense prediction tasks.",
     "references": "[1] Long et al. (2015). Fully Convolutional Networks. CVPR.\n[2] Eigen et al. (2014). Depth Map Prediction. NeurIPS.\n[3] Xie et al. (2021). SegFormer. NeurIPS.\n[4] Bao et al. (2021). BEiT. ICLR."
   },
   "tables": {
@@ -119,18 +119,18 @@
         "id": "D_002",
         "type": "table_text_mismatch",
         "text_location": "results",
-        "text_claim": "DenseVision achieves mIoU of 54.8 — competitive with SegFormer-B2 (51.8)",
+        "text_claim": "DenseVision achieves mIoU of 54.8 \u00e2\u20ac\u201d competitive with SegFormer-B2 (51.8)",
         "table_id": "Table 1",
         "table_value": "SegFormer-B2 mIoU=51.8",
         "injected": false,
-        "note": "This one IS consistent — control entry"
+        "note": "This one IS consistent \u00e2\u20ac\u201d control entry"
       }
     ],
     "task4_citations": [
       {
         "id": "ref_1",
         "citation_number": "1",
-        "raw": "Long et al. (2015). Fully Convolutional Networks for Semantic Segmentation. CVPR.",
+        "raw": "Long et al. (2015). FCN. CVPR.",
         "status": "valid",
         "year": 2015,
         "injected": false
@@ -138,7 +138,7 @@
       {
         "id": "ref_2",
         "citation_number": "2",
-        "raw": "Eigen et al. (2014). Depth Map Prediction from a Single Image using a Multi-Scale Deep Network. NeurIPS.",
+        "raw": "Eigen et al. (2014). Depth Prediction. NeurIPS.",
         "status": "valid",
         "year": 2014,
         "injected": false
@@ -146,7 +146,7 @@
       {
         "id": "ref_3",
         "citation_number": "3",
-        "raw": "Xie et al. (2021). SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers. NeurIPS.",
+        "raw": "Xie et al. (2021). SegFormer. NeurIPS.",
         "status": "valid",
         "year": 2021,
         "injected": false
@@ -154,11 +154,10 @@
       {
         "id": "ref_4",
         "citation_number": "4",
-        "raw": "Patel & Rodriguez (2022). UltraSegNet: Real-Time Panoptic Segmentation at 200fps. ECCV 2022.",
+        "raw": "Patel & Rodriguez (2022). UltraSegNet 200fps. ECCV.",
         "status": "ghost",
         "year": 2022,
-        "injected": true,
-        "note": "Ghost — fabricated paper"
+        "injected": true
       }
     ]
   }
