@@ -1,15 +1,21 @@
 name: scholar-env
-version: "0.3.0"
+version: "0.4.0"
 description: >
   ScholarEnv is an OpenEnv environment simulating the scholarly publishing
   integrity pipeline. An AI agent acts as a research integrity auditor,
-  progressing from formatting compliance through internal consistency checking
-  to full claim-evidence auditing — the first RL environment for automated
-  peer review. Task 3 scores 0.20–0.45 for frontier models, providing a genuine
-  training signal that prompting alone cannot achieve.
+  progressing from formatting compliance through internal consistency checking,
+  claim-evidence auditing, and citation verification — the first RL environment
+  for AI-assisted peer review. Task 3 scores 0.20–0.45 for frontier models,
+  providing genuine training signal that prompting alone cannot achieve.
 
 domain: academic_publishing
 license: Apache-2.0
+baseline_script: inference.py
+
+authors:
+  - name: Nensi Pansuriya
+  - name: Krushna Parmar
+  - name: Ishita Bhojani
 
 tags:
   - openenv
@@ -19,14 +25,14 @@ tags:
   - peer-review
   - academic
   - rl-environment
+  - citation-verification
 
 tasks:
   - id: formatting_compliance
-    name: "Manuscript Formatting Compliance"
+    name: "IEEE Manuscript Formatting Compliance"
     description: >
-      Reformat a badly-formatted manuscript to meet IEEE style requirements.
-      Fix: title (≤15 words), abstract (150–250 words, no citations), section
-      order, figure/table captions, in-text citations, keywords, author block.
+      Reformat a badly-formatted manuscript to IEEE style. Fix title,
+      abstract length, section order, citations, captions, author block.
     difficulty: easy
     interaction_type: single_shot
     max_steps: 3
@@ -36,10 +42,9 @@ tasks:
   - id: internal_consistency
     name: "Internal Consistency Verification"
     description: >
-      Identify internal contradictions in a research paper — number mismatches
-      between sections, references to nonexistent figures/tables, inconsistent
-      contribution counts, unresolved placeholders. Navigate with query_section,
-      then submit findings. F-beta reward (beta=0.5) penalises hallucinated findings.
+      Find internal contradictions — number mismatches, nonexistent
+      figure/table references, inconsistent contribution counts.
+      Multi-step navigation + submit. F-beta rewards precision.
     difficulty: medium
     interaction_type: multi_step
     max_steps: 4
@@ -47,77 +52,68 @@ tasks:
     success_threshold: 0.50
 
   - id: claim_evidence_audit
-    name: "Claim–Evidence Discrepancy Audit"
+    name: "Claim-Evidence Discrepancy Audit"
     description: >
-      Audit whether numerical claims in the paper text match the values in
-      referenced tables/figures. Injected discrepancies must be found via
-      strategic multi-step navigation (query_section, check_table,
-      extract_claims). Traversal order matters — RL discovers the optimal
-      strategy. PBRS provides dense intermediate rewards.
+      Find places where text claims don't match referenced table values.
+      Strategic multi-step navigation required. PBRS intermediate rewards.
+      RL discovers optimal traversal strategy — prompting cannot.
     difficulty: hard
     interaction_type: multi_step
     max_steps: 6
     expected_frontier_score: "0.20-0.45"
     success_threshold: 0.35
 
+  - id: citation_verification
+    name: "Reference Citation Verification"
+    description: >
+      Verify whether cited papers actually exist and are correctly attributed.
+      Agent checks citations via check_citation actions (CrossRef/arXiv DB),
+      then submits verdicts (valid/ghost/misattributed). SQLite cache
+      accumulates verified citations across episodes.
+    difficulty: medium
+    interaction_type: multi_step
+    max_steps: 8
+    expected_frontier_score: "0.35-0.60"
+    success_threshold: 0.50
+
 action_space:
   type: structured
   description: >
-    Task 1 (formatting_compliance): FormattingAction — submit the full
-    reformatted manuscript text.
-    Tasks 2/3 (scholar tasks): ScholarAction — navigate with query_section,
-    check_table, extract_claims; finalise with submit_findings.
+    Tasks 1: FormattingAction — submit full formatted manuscript text.
+    Tasks 2/3: ScholarAction — navigate (query_section, check_table,
+    extract_claims) then submit_findings.
+    Task 4: CitationAction — check_citation then submit_verdicts.
   discriminator_field: task
 
 observation_space:
   type: structured
   fields:
-    - name: task_id
-      type: string
-    - name: task_description
-      type: string
-    - name: paper_id
-      type: string
-    - name: manuscript_text
-      type: string
-      note: "Task 1 initial observation only"
-    - name: style_guide
-      type: object
-      note: "Task 1 only — IEEE rule config"
-    - name: available_sections
-      type: array
-      note: "Tasks 2/3 — queryable section names"
-    - name: available_tables
-      type: array
-    - name: current_section_content
-      type: string
-      note: "Returned after query_section"
-    - name: current_table_content
-      type: object
-      note: "Returned after check_table"
-    - name: extracted_claims
-      type: array
-      note: "Returned after extract_claims"
-    - name: findings_so_far
-      type: array
-    - name: step_count
-      type: integer
-    - name: max_steps
-      type: integer
-    - name: feedback
-      type: string
-    - name: hint
-      type: string
-    - name: cumulative_score
-      type: float
+    - {name: task_id, type: string}
+    - {name: task_description, type: string}
+    - {name: paper_id, type: string}
+    - {name: manuscript_text, type: string, note: "Task 1 initial obs only"}
+    - {name: style_guide, type: object, note: "Task 1 IEEE rules"}
+    - {name: available_sections, type: array}
+    - {name: available_tables, type: array}
+    - {name: available_references, type: array, note: "Task 4"}
+    - {name: current_section_content, type: string}
+    - {name: current_table_content, type: object}
+    - {name: extracted_claims, type: array}
+    - {name: citation_data, type: object, note: "Task 4 citation details"}
+    - {name: findings_so_far, type: array}
+    - {name: step_count, type: integer}
+    - {name: max_steps, type: integer}
+    - {name: feedback, type: string}
+    - {name: hint, type: string}
+    - {name: cumulative_score, type: float}
 
 reward:
   type: continuous
   range: [0.0, 1.0]
   description: >
-    Task 1: Progressive Reward Shaping (PRS) — 3 stages unlock sequentially.
-    Tasks 2/3: F-beta (beta=0.5, precision-biased) against pre-annotated
-    ground truth + PBRS intermediate shaping bonuses + coverage bonus.
+    Task 1: Progressive Reward Shaping (PRS) 3-stage unlock.
+    Tasks 2/3: F-beta(beta=0.5) + PBRS intermediate + coverage bonus.
+    Task 4: precision_valid + recall_invalid + evidence_score.
 
 endpoints:
   reset: POST /reset

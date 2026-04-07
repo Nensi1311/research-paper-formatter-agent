@@ -481,8 +481,16 @@ PAPER_003 = {
 
 # ── Write papers ──────────────────────────────────────────────────────────────
 
-def main() -> None:
+def main(force: bool = False) -> None:
+    import sys
+    force = force or "--force" in sys.argv
     papers = [PAPER_001, PAPER_002, PAPER_003]
+
+    # Skip if all JSON files already exist — avoids overwriting hand-annotated GT
+    if not force and all((OUT_DIR / f"{p['id']}.json").exists() for p in papers):
+        print(f"  Corpus already present in {OUT_DIR.resolve()} — skipping.")
+        print("  Pass --force to regenerate from scratch.")
+        return
     for paper in papers:
         out_path = OUT_DIR / f"{paper['id']}.json"
         with out_path.open("w", encoding="utf-8") as f:

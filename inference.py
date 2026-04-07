@@ -1,15 +1,9 @@
 #!/usr/bin/env python3
 """
-inference.py — ScholarEnv baseline agent (OpenEnv hackathon submission).
+inference.py — ScholarEnv baseline agent
+Authors: Nensi Pansuriya, Krushna Parmar, Ishita Bhojani
 
-MANDATORY REQUIREMENTS (problem statement):
-  - Named inference.py, in root directory
-  - Uses: API_BASE_URL, MODEL_NAME, HF_TOKEN environment variables
-  - Emits structured stdout: [START] / [STEP] / [END]   ← auto-scored in Phase 2
-  - Uses OpenAI client for all LLM calls
-  - Completes in < 20 minutes on 2vCPU / 8GB
-
-LOG FORMAT (exact — deviation = incorrect Phase 2 scoring):
+MANDATORY LOG FORMAT (Phase 2 auto-scored — exact field names and spacing required):
   [START] task=<id>  env=scholar-env  model=<MODEL_NAME>
   [STEP]  step=<N>   action=<str>     reward=<float>  done=<bool>  error=<None|str>
   [END]   success=<bool>  steps=<N>   score=<float>   rewards=[...]
@@ -26,35 +20,46 @@ from typing import List, Optional
 import httpx
 from openai import OpenAI
 
-# ── Config ────────────────────────────────────────────────────────────────────
+# ── Required env vars (per problem statement) ─────────────────────────────────
 API_BASE_URL = os.environ["API_BASE_URL"]
 MODEL_NAME   = os.environ["MODEL_NAME"]
 API_KEY      = os.environ["HF_TOKEN"]
-SPACE_URL    = os.environ.get("HF_SPACE_URL",
-               "https://your-username-scholar-env.hf.space").rstrip("/")
+# HF_SPACE_URL: set this to your deployed space URL before submitting
+SPACE_URL    = os.environ.get("HF_SPACE_URL", "").rstrip("/")
+if not SPACE_URL:
+    raise RuntimeError(
+        "HF_SPACE_URL environment variable must be set to your deployed HF Space URL.\n"
+        "Example: export HF_SPACE_URL=https://your-username-scholar-env.hf.space"
+    )
 
-TEMPERATURE       = 0.1
-MAX_TOKENS        = 4000
-MAX_STEPS         = 6
-SUCCESS_THRESHOLD = 0.60
+TEMPERATURE        = 0.1
+MAX_TOKENS         = 4000
+MAX_STEPS          = 6
+SUCCESS_THRESHOLD  = 0.60
 
 client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
 
-# ── Structured logging (mandatory per problem statement) ─────────────────────
+# ── Mandatory structured logging ──────────────────────────────────────────────
+# Exact format from Sample Inference Script — double-space between fields
 
 def log_start(*, task: str, env: str, model: str) -> None:
-    print(f"[START] task={task} env={env} model={model}", flush=True)
+    print(f"[START] task={task}  env={env}  model={model}", flush=True)
+
 
 def log_step(*, step: int, action: str, reward: float,
              done: bool, error: Optional[str] = None) -> None:
-    print(f"[STEP]  step={step} action={action!r:.80} "
-          f"reward={reward:.4f} done={done} error={error}", flush=True)
+    # No !r on action — plain string, truncated to 80 chars
+    a = action[:80] if len(action) > 80 else action
+    print(f"[STEP]  step={step}  action={a}  reward={reward:.4f}  done={done}  error={error}",
+          flush=True)
+
 
 def log_end(*, success: bool, steps: int, score: float,
             rewards: List[float]) -> None:
-    print(f"[END]   success={success} steps={steps} "
-          f"score={score:.4f} rewards={[round(r,4) for r in rewards]}", flush=True)
+    print(f"[END]   success={success}  steps={steps}  "
+          f"score={score:.4f}  rewards={[round(r, 4) for r in rewards]}",
+          flush=True)
 
 
 # ── LLM helper ────────────────────────────────────────────────────────────────
@@ -75,11 +80,12 @@ def llm(prompt: str, max_tokens: int = MAX_TOKENS) -> str:
             )
             return (r.choices[0].message.content or "").strip()
         except Exception as exc:
-            print(f"[DEBUG] LLM attempt {attempt+1} failed: {exc}", flush=True)
+            print(f"[DEBUG] LLM attempt {attempt+1}: {exc}", flush=True)
             if attempt == 2:
                 return ""
             time.sleep(2 ** attempt)
     return ""
+
 
 def parse_json_safe(text: str) -> list | None:
     text = text.strip()
@@ -106,6 +112,7 @@ async def env_reset(task_id: str) -> dict:
         r.raise_for_status()
         return r.json()
 
+
 async def env_step(action: dict) -> dict:
     async with httpx.AsyncClient(timeout=120.0) as c:
         r = await c.post(f"{SPACE_URL}/step", json=action)
@@ -113,31 +120,30 @@ async def env_step(action: dict) -> dict:
         return r.json()
 
 
-# ── Task runners ──────────────────────────────────────────────────────────────
+# ── Task 1: formatting_compliance ─────────────────────────────────────────────
 
 async def run_task1() -> tuple[float, List[float], int]:
-    """formatting_compliance: iterative refinement up to 3 steps."""
     result = await env_reset("formatting_compliance")
     obs = result["observation"]
     rewards: List[float] = []
 
     for s in range(1, 4):
         prompt = (
-            f"You are an expert IEEE manuscript formatter.\n\n"
+            "You are an expert IEEE manuscript formatter.\n\n"
             f"TASK: {obs['task_description']}\n\n"
             f"RULES:\n{json.dumps(obs.get('style_guide', {}), indent=2)}\n\n"
-            f"MANUSCRIPT:\n{obs.get('manuscript_text', '')}\n"
+            f"MANUSCRIPT:\n{obs.get('manuscript_text', '')}"
             + (f"\nFEEDBACK: {obs['feedback']}" if obs.get("feedback") else "")
             + (f"\nHINT: {obs['hint']}"         if obs.get("hint") else "")
             + "\n\nReturn ONLY the fully reformatted manuscript."
         )
-        text = llm(prompt, max_tokens=4000)
-        r = await env_step({"task": "formatting_compliance",
-                             "formatted_text": text})
-        rew  = float(r.get("reward", 0.0))
-        done = bool(r.get("done", False))
+        text   = llm(prompt, max_tokens=4000)
+        r      = await env_step({"task": "formatting_compliance",
+                                  "formatted_text": text})
+        rew    = float(r.get("reward", 0.0))
+        done   = bool(r.get("done", False))
         rewards.append(rew)
-        log_step(step=s, action=f"[submit len={len(text)}]",
+        log_step(step=s, action=f"submit_formatted_text len={len(text)}",
                  reward=rew, done=done)
         obs = r["observation"]
         if done:
@@ -146,8 +152,9 @@ async def run_task1() -> tuple[float, List[float], int]:
     return max(rewards), rewards, 3
 
 
+# ── Task 2: internal_consistency ──────────────────────────────────────────────
+
 async def run_task2() -> tuple[float, List[float], int]:
-    """internal_consistency: navigate sections → precision-filtered submit."""
     result   = await env_reset("internal_consistency")
     obs      = result["observation"]
     findings: list = []
@@ -156,9 +163,9 @@ async def run_task2() -> tuple[float, List[float], int]:
 
     for sec in obs.get("available_sections", [])[:3]:
         step_num += 1
-        nav = await env_step({"task": "internal_consistency",
-                               "action_type": "query_section",
-                               "section_name": sec})
+        nav    = await env_step({"task": "internal_consistency",
+                                  "action_type": "query_section",
+                                  "section_name": sec})
         content  = nav["observation"].get("current_section_content", "")
         nav_rew  = float(nav.get("reward", 0.0))
         nav_done = bool(nav.get("done", False))
@@ -167,10 +174,9 @@ async def run_task2() -> tuple[float, List[float], int]:
                  reward=nav_rew, done=nav_done)
         if nav_done:
             break
-
         if content:
             prompt = (
-                f"Audit for INTERNAL contradictions only (no external knowledge).\n"
+                f"Audit for INTERNAL contradictions (no external knowledge needed).\n"
                 f"SECTION: {sec}\nCONTENT:\n{content[:3000]}\n\n"
                 f"ALREADY FOUND:\n{json.dumps(findings)}\n\n"
                 "Types: number_mismatch, missing_reference, contribution_count, other\n"
@@ -187,19 +193,20 @@ async def run_task2() -> tuple[float, List[float], int]:
                         seen.add(sig)
 
     step_num += 1
-    sub = await env_step({"task": "internal_consistency",
-                           "action_type": "submit_findings",
-                           "findings": findings})
+    sub  = await env_step({"task": "internal_consistency",
+                            "action_type": "submit_findings",
+                            "findings": findings})
     rew  = float(sub.get("reward", 0.0))
     done = bool(sub.get("done", True))
     rewards.append(rew)
-    log_step(step=step_num, action=f"submit_findings:[{len(findings)}]",
+    log_step(step=step_num, action=f"submit_findings count={len(findings)}",
              reward=rew, done=done)
     return rew, rewards, step_num
 
 
+# ── Task 3: claim_evidence_audit ──────────────────────────────────────────────
+
 async def run_task3() -> tuple[float, List[float], int]:
-    """claim_evidence_audit: strategic nav → extract_claims → tables → submit."""
     result   = await env_reset("claim_evidence_audit")
     obs      = result["observation"]
     findings: list = []
@@ -210,7 +217,7 @@ async def run_task3() -> tuple[float, List[float], int]:
     avail_tables = obs.get("available_tables",   [])
 
     # Priority: results > abstract > introduction > others
-    priority = []
+    priority: list[str] = []
     for target in ("results", "abstract", "introduction", "methods"):
         for sec in avail_secs:
             if target in sec.lower() and sec not in priority:
@@ -222,12 +229,11 @@ async def run_task3() -> tuple[float, List[float], int]:
 
     section_contents: dict[str, str] = {}
 
-    # A — query top 3 sections
     for sec in priority[:3]:
         step_num += 1
-        nav = await env_step({"task": "claim_evidence_audit",
-                               "action_type": "query_section",
-                               "section_name": sec})
+        nav      = await env_step({"task": "claim_evidence_audit",
+                                    "action_type": "query_section",
+                                    "section_name": sec})
         content  = nav["observation"].get("current_section_content", "")
         nav_rew  = float(nav.get("reward", 0.0))
         nav_done = bool(nav.get("done", False))
@@ -239,14 +245,14 @@ async def run_task3() -> tuple[float, List[float], int]:
         if nav_done:
             break
 
-    # B — extract_claims from results
+    # extract_claims from results
     extracted: list = []
     res_sec = next((s for s in priority[:3] if "result" in s.lower()), None)
     if res_sec and step_num < MAX_STEPS - 2:
         step_num += 1
-        ext = await env_step({"task": "claim_evidence_audit",
-                               "action_type": "extract_claims",
-                               "section_name": res_sec})
+        ext      = await env_step({"task": "claim_evidence_audit",
+                                    "action_type": "extract_claims",
+                                    "section_name": res_sec})
         extracted = ext["observation"].get("extracted_claims", []) or []
         ext_rew   = float(ext.get("reward", 0.0))
         ext_done  = bool(ext.get("done", False))
@@ -254,7 +260,7 @@ async def run_task3() -> tuple[float, List[float], int]:
         log_step(step=step_num, action=f"extract_claims:{res_sec}",
                  reward=ext_rew, done=ext_done)
 
-    # C — check tables referenced in claims (+ first 2 available)
+    # check tables
     ref_tables: set[str] = set()
     for claim in extracted:
         for tref in claim.get("table_refs", []):
@@ -267,8 +273,8 @@ async def run_task3() -> tuple[float, List[float], int]:
         if step_num >= MAX_STEPS - 1:
             break
         step_num += 1
-        tc = await env_step({"task": "claim_evidence_audit",
-                              "action_type": "check_table", "table_id": tid})
+        tc       = await env_step({"task": "claim_evidence_audit",
+                                    "action_type": "check_table", "table_id": tid})
         tdata    = tc["observation"].get("current_table_content")
         tc_rew   = float(tc.get("reward", 0.0))
         tc_done  = bool(tc.get("done", False))
@@ -278,15 +284,15 @@ async def run_task3() -> tuple[float, List[float], int]:
         if tdata and "error" not in tdata:
             table_data[tid] = tdata
 
-    # D — LLM cross-reference → findings
+    # LLM cross-reference
     for sec, content in section_contents.items():
         if not content:
             continue
         prompt = (
-            "Find CLAIM-EVIDENCE discrepancies: text claims ≠ table values.\n\n"
+            "Find CLAIM-EVIDENCE discrepancies: text claims differ from table values.\n\n"
             f"SECTION: {sec}\nCONTENT:\n{content[:2500]}\n\n"
             f"TABLE DATA:\n{json.dumps(table_data, indent=2)[:2000]}\n\n"
-            "Only report discrepancies you can CONFIRM from the table data above.\n"
+            "Only report discrepancies you can CONFIRM from the table data.\n"
             'JSON array: [{"type":"table_text_mismatch","location":"..","claim":"..","contradicts":"..","table_id":"..","table_value":".."}]\n'
             "If none confirmed: []"
         )
@@ -299,15 +305,70 @@ async def run_task3() -> tuple[float, List[float], int]:
                     findings.append(item)
                     seen.add(sig)
 
-    # E — submit
     step_num += 1
-    sub = await env_step({"task": "claim_evidence_audit",
-                           "action_type": "submit_findings",
-                           "findings": findings})
+    sub  = await env_step({"task": "claim_evidence_audit",
+                            "action_type": "submit_findings",
+                            "findings": findings})
     rew  = float(sub.get("reward", 0.0))
     done = bool(sub.get("done", True))
     rewards.append(rew)
-    log_step(step=step_num, action=f"submit_findings:[{len(findings)}]",
+    log_step(step=step_num, action=f"submit_findings count={len(findings)}",
+             reward=rew, done=done)
+    return rew, rewards, step_num
+
+
+# ── Task 4: citation_verification ─────────────────────────────────────────────
+
+async def run_task4() -> tuple[float, List[float], int]:
+    result   = await env_reset("citation_verification")
+    obs      = result["observation"]
+    rewards:  List[float] = []
+    step_num  = 0
+
+    # Navigate: check each citation in the reference list
+    refs = obs.get("available_references", [])[:4]
+    verified: list = []
+
+    for ref_id in refs:
+        step_num += 1
+        nav    = await env_step({"task": "citation_verification",
+                                  "action_type": "check_citation",
+                                  "citation_id": ref_id})
+        cit_data = nav["observation"].get("citation_data", {})
+        nav_rew  = float(nav.get("reward", 0.0))
+        nav_done = bool(nav.get("done", False))
+        rewards.append(nav_rew)
+        log_step(step=step_num, action=f"check_citation:{ref_id}",
+                 reward=nav_rew, done=nav_done)
+        if nav_done:
+            break
+
+        if cit_data:
+            prompt = (
+                f"You are verifying an academic citation.\n\n"
+                f"CITATION ID: {ref_id}\n"
+                f"CITATION DATA:\n{json.dumps(cit_data, indent=2)}\n\n"
+                "Is this citation: (a) valid - paper exists and authors/title match? "
+                "(b) ghost - paper does not exist? (c) misattributed - paper exists but details wrong?\n\n"
+                'Respond ONLY with JSON: {"citation_id": "...", "status": "valid|ghost|misattributed", '
+                '"issue": "describe if not valid", "confidence": 0.0-1.0}'
+            )
+            raw = llm(prompt, max_tokens=300)
+            try:
+                verdict = json.loads(raw.strip().lstrip("```json").rstrip("```"))
+                if isinstance(verdict, dict):
+                    verified.append(verdict)
+            except Exception:
+                pass
+
+    step_num += 1
+    sub  = await env_step({"task": "citation_verification",
+                            "action_type": "submit_verdicts",
+                            "verdicts": verified})
+    rew  = float(sub.get("reward", 0.0))
+    done = bool(sub.get("done", True))
+    rewards.append(rew)
+    log_step(step=step_num, action=f"submit_verdicts count={len(verified)}",
              reward=rew, done=done)
     return rew, rewards, step_num
 
@@ -318,7 +379,9 @@ RUNNERS = {
     "formatting_compliance": run_task1,
     "internal_consistency":  run_task2,
     "claim_evidence_audit":  run_task3,
+    "citation_verification": run_task4,
 }
+
 
 async def main() -> None:
     overall: dict[str, float] = {}
@@ -327,7 +390,7 @@ async def main() -> None:
     for task_id, runner in RUNNERS.items():
         log_start(task=task_id, env="scholar-env", model=MODEL_NAME)
 
-        score = 0.0
+        score   = 0.0
         rewards: List[float] = []
         steps   = 0
         success = False
@@ -344,7 +407,7 @@ async def main() -> None:
         print(f"[DEBUG] elapsed={time.time()-t0:.1f}s", flush=True)
 
     avg = sum(overall.values()) / len(overall)
-    print(f"\n[SUMMARY] average={avg:.4f} scores={overall}", flush=True)
+    print(f"\n[SUMMARY] average={avg:.4f}  scores={overall}", flush=True)
 
     with open("baseline_scores.json", "w") as f:
         json.dump({"scores": overall, "average": round(avg, 4),

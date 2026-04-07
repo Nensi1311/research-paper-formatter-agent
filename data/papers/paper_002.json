@@ -125,6 +125,41 @@
         "injected": false,
         "note": "This one IS consistent — control entry"
       }
+    ],
+    "task4_citations": [
+      {
+        "id": "ref_1",
+        "citation_number": "1",
+        "raw": "Long et al. (2015). Fully Convolutional Networks for Semantic Segmentation. CVPR.",
+        "status": "valid",
+        "year": 2015,
+        "injected": false
+      },
+      {
+        "id": "ref_2",
+        "citation_number": "2",
+        "raw": "Eigen et al. (2014). Depth Map Prediction from a Single Image using a Multi-Scale Deep Network. NeurIPS.",
+        "status": "valid",
+        "year": 2014,
+        "injected": false
+      },
+      {
+        "id": "ref_3",
+        "citation_number": "3",
+        "raw": "Xie et al. (2021). SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers. NeurIPS.",
+        "status": "valid",
+        "year": 2021,
+        "injected": false
+      },
+      {
+        "id": "ref_4",
+        "citation_number": "4",
+        "raw": "Patel & Rodriguez (2022). UltraSegNet: Real-Time Panoptic Segmentation at 200fps. ECCV 2022.",
+        "status": "ghost",
+        "year": 2022,
+        "injected": true,
+        "note": "Ghost — fabricated paper"
+      }
     ]
   }
 }

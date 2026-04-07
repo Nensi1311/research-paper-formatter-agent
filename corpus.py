@@ -48,9 +48,12 @@ class Paper:
     def __post_init__(self) -> None:
         self.section_names    = list(self.sections.keys())
         self.table_names      = list(self.tables.keys())
-        self.applicable_tasks = ["formatting_compliance",
-                                  "internal_consistency",
-                                  "claim_evidence_audit"]
+        self.applicable_tasks = [
+            "formatting_compliance",
+            "internal_consistency",
+            "claim_evidence_audit",
+            "citation_verification",
+        ]
         self.violated_rules_task1 = [
             v.get("rule", "") for v in
             self.ground_truth.get("task1_violations", [])

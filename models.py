@@ -1,18 +1,19 @@
 """
-models.py — Canonical Pydantic models for ScholarEnv v0.3.
+models.py — Canonical Pydantic models for ScholarEnv v0.4.
 
-Design principles (Google DeepMind / Meta ML engineer standard):
-  1. AnyAction uses Annotated discriminated union — FastAPI/Pydantic deserialises
-     FormattingAction vs ScholarAction from a single 'task' field.
-  2. EpisodeStatus enum — no magic strings.
-  3. All Optional fields carry explicit defaults.
-  4. ScholarReward mirrors the grader internals for full auditability.
-  5. No circular imports — models.py imports nothing from server/.
+Authors: Nensi Pansuriya, Krushna Parmar, Ishita Bhojani
+
+Design:
+  1. AnyAction uses Annotated discriminated union on 'task' field.
+  2. ScholarObservation covers all 4 tasks with Optional fields.
+  3. CitationAction supports Task 4 (citation_verification).
+  4. No circular imports — models.py imports nothing from server/.
 
 References:
-  PRS  — arxiv 2512.07478 (stage_N_score fields)
-  PBRS — Ng, Harada & Russell 1999 (shaping_bonus)
-  AdaRFT — arxiv 2504.05520 (curriculum_hint)
+  PRS  — arxiv 2512.07478
+  PBRS — Ng, Harada & Russell 1999
+  AdaRFT — arxiv 2504.05520
+  Veri-R1 — arxiv 2510.01932 (Task 4 design)
 """
 from __future__ import annotations
 
@@ -32,12 +33,7 @@ class EpisodeStatus(str, Enum):
 # ── Actions ───────────────────────────────────────────────────────────────────
 
 class FormattingAction(BaseModel):
-    """
-    Task 1 action: submit the fully reformatted manuscript.
-
-    The entire manuscript is submitted as a single string.
-    The grader computes a Progressive Reward Shaping score across 3 stages.
-    """
+    """Task 1: submit the fully reformatted manuscript."""
     task: Literal["formatting_compliance"] = "formatting_compliance"
     formatted_text: str = Field(
         description="Complete reformatted manuscript as a single string."
@@ -45,41 +41,42 @@ class FormattingAction(BaseModel):
 
 
 class ScholarAction(BaseModel):
-    """
-    Tasks 2 & 3 actions: navigate the paper or submit findings.
-
-    Navigation actions (query_section, check_table, extract_claims) return
-    intermediate content with a PBRS shaping bonus.
-    submit_findings ends the episode and triggers the F-beta grader.
-    """
+    """Tasks 2 & 3: navigate the paper or submit findings."""
     task: Literal["internal_consistency", "claim_evidence_audit"]
     action_type: Literal[
-        "query_section",    # → current_section_content in obs
-        "check_table",      # → current_table_content in obs
-        "extract_claims",   # → extracted_claims (structured) in obs
-        "submit_findings",  # → final F-beta score, done=True
+        "query_section",
+        "check_table",
+        "extract_claims",
+        "submit_findings",
     ]
-    section_name: Optional[str] = Field(
+    section_name: Optional[str] = Field(default=None)
+    table_id:     Optional[str] = Field(default=None)
+    findings:     Optional[list[dict]] = Field(default=None)
+
+
+class CitationAction(BaseModel):
+    """Task 4: verify citations in paper reference list."""
+    task: Literal["citation_verification"] = "citation_verification"
+    action_type: Literal[
+        "check_citation",   # → returns citation_data in obs
+        "submit_verdicts",  # → final grade, done=True
+    ]
+    citation_id: Optional[str] = Field(
         default=None,
-        description="Required for query_section and extract_claims."
+        description="Reference ID for check_citation, e.g. 'ref_1'"
     )
-    table_id: Optional[str] = Field(
-        default=None,
-        description="Required for check_table. E.g. 'Table 1', 'Table 2A'."
-    )
-    findings: Optional[list[dict]] = Field(
+    verdicts: Optional[list[dict]] = Field(
         default=None,
         description=(
-            "Required for submit_findings. Each dict must contain: "
-            "type (str), location (str), claim (str), contradicts (str). "
-            "For Task 3, also include: table_id (str), table_value (str)."
+            "For submit_verdicts. Each dict: "
+            "citation_id, status (valid|ghost|misattributed), issue, confidence."
         ),
     )
 
 
 # Discriminated union — FastAPI deserialises on the 'task' field
 AnyAction = Annotated[
-    Union[FormattingAction, ScholarAction],
+    Union[FormattingAction, ScholarAction, CitationAction],
     Field(discriminator="task"),
 ]
 
@@ -89,7 +86,7 @@ AnyAction = Annotated[
 class ScholarObservation(BaseModel):
     """Unified observation returned by reset() and every step()."""
 
-    # ── Always present ──────────────────────────────────────────────────────
+    # Always present
     task_id:          str
     task_description: str
     paper_id:         str
@@ -99,17 +96,17 @@ class ScholarObservation(BaseModel):
     feedback:         str   = ""
     hint:             str   = ""
 
-    # ── Task 1 only ─────────────────────────────────────────────────────────
+    # Task 1 only
     manuscript_text: Optional[str] = Field(
         default=None,
         description="Badly-formatted manuscript (Task 1 initial observation)."
     )
     style_guide: Optional[dict] = Field(
         default=None,
-        description="IEEE style rule config — keys mirror STAGE_CONFIG rules."
+        description="IEEE style rule config."
     )
 
-    # ── Tasks 2 & 3 — navigation ────────────────────────────────────────────
+    # Tasks 2 & 3 — navigation
     available_sections:      list[str]          = Field(default_factory=list)
     available_tables:        list[str]          = Field(default_factory=list)
     current_section_content: Optional[str]      = None
@@ -117,27 +114,34 @@ class ScholarObservation(BaseModel):
     extracted_claims:        Optional[list[dict]] = None
     findings_so_far:         list[dict]          = Field(default_factory=list)
 
+    # Task 4 — citation verification
+    available_references: list[dict] = Field(
+        default_factory=list,
+        description="Task 4: list of {id, citation_number, raw} dicts."
+    )
+    citation_data: Optional[dict] = Field(
+        default=None,
+        description="Task 4: returned after check_citation action."
+    )
 
-# ── Reward (logging / documentation only — not returned in step response) ─────
+
+# ── Reward (logging / documentation only) ────────────────────────────────────
 
 class ScholarReward(BaseModel):
     """Full reward breakdown — logged in step info dict."""
-
     total: float = Field(ge=0.0, le=1.0)
-
-    # Task 1 — PRS stages (arxiv 2512.07478)
+    # Task 1 — PRS stages
     stage_1_score: float = 0.0
     stage_2_score: float = 0.0
     stage_3_score: float = 0.0
-
-    # Tasks 2 & 3 — F-beta components
+    # Tasks 2 & 3 — F-beta
     f_beta:               float = 0.0
     precision:            float = 0.0
     recall:               float = 0.0
-    evidence_specificity: float = 0.0  # did agent cite table_id / location?
-    coverage_bonus:       float = 0.0  # PBRS coverage at submission
-
-    # Shaping (PBRS intermediate steps)
-    shaping_bonus: float = 0.0
-
+    evidence_specificity: float = 0.0
+    coverage_bonus:       float = 0.0
+    shaping_bonus:        float = 0.0
+    # Task 4 — citation
+    precision_valid:      float = 0.0
+    recall_ghost:         float = 0.0
     rule_breakdown: dict[str, float] = Field(default_factory=dict)

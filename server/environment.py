@@ -44,6 +44,7 @@ if str(_ROOT) not in sys.path:
 
 from models import (
     EpisodeStatus, FormattingAction, ScholarAction, ScholarObservation,
+    CitationAction,
 )
 from corpus import PaperCorpus, Paper
 from server.curriculum import Curriculum
@@ -93,6 +94,18 @@ TASK_CONFIG: dict[str, dict] = {
             "for full evidence specificity credit."
         ),
     },
+    "citation_verification": {
+        "max_steps":         8,
+        "allows_navigation": True,
+        "description": (
+            "Verify whether cited references actually exist and are correctly "
+            "attributed. Some citations are deliberately fabricated (ghost) or "
+            "misattributed. Use check_citation to inspect each reference's "
+            "metadata, then submit_verdicts with your findings. "
+            "Reward = precision(valid) + recall(ghost/misattributed) + evidence_score. "
+            "Expected frontier score: 0.35-0.60."
+        ),
+    },
 }
 
 
@@ -139,6 +152,7 @@ class ScholarEnvironment:
             "formatting_compliance": FormattingGrader(f"{d}/styles/ieee.yaml"),
             "internal_consistency":  ConsistencyGrader(),
             "claim_evidence_audit":  AuditGrader(),
+            "citation_verification": None,  # handled directly in _step_citation
         }
         self._episode: EpisodeState | None = None
 
@@ -209,6 +223,13 @@ class ScholarEnvironment:
             except Exception as e:
                 return {"error": f"Invalid ScholarAction: {e}"}
             return self._step_submit(action, paper, ep)
+
+        if task == "citation_verification":
+            try:
+                action = CitationAction(**action_dict)
+            except Exception as e:
+                return {"error": f"Invalid CitationAction: {e}"}
+            return self._step_citation(action, paper, ep)
 
         return {"error": f"Unknown action. task='{task}' action_type='{action_type}'"}
 
@@ -415,6 +436,112 @@ class ScholarEnvironment:
 
     # ── Initial observation builder ───────────────────────────────────────────
 
+
+    # ── Task 4: citation verification ─────────────────────────────────────────
+
+    def _step_citation(
+        self, action: CitationAction, paper: Paper, ep: EpisodeState
+    ) -> dict:
+        refs = paper.ground_truth.get("task4_citations", [])
+        ref_map = {r["id"]: r for r in refs}
+        ref_stubs = [
+            {"id": r["id"], "citation_number": r["citation_number"],
+             "raw": r["raw"][:100]}
+            for r in refs
+        ]
+
+        if action.action_type == "check_citation":
+            cid   = action.citation_id or ""
+            ref   = ref_map.get(cid)
+            cdata = None
+            if ref:
+                # Return full ref details (offline — no network calls)
+                cdata = {
+                    "id":               ref["id"],
+                    "citation_number":  ref["citation_number"],
+                    "raw":              ref["raw"],
+                    "authors":          ref.get("authors", []),
+                    "year":             ref.get("year"),
+                    "status_hint":      (
+                        "Examine author names, year plausibility, "
+                        "title coherence, and venue credibility."
+                    ),
+                }
+                ep.nav_state.record_section(f"citation:{cid}")  # track coverage
+
+            # PBRS intermediate reward
+            shaper        = PotentialBasedShaper(ep.nav_state)
+            phi_after     = shaper.potential()
+            shaping_bonus = shaper.shaping_bonus(ep.prev_phi, phi_after)
+            ep.prev_phi   = phi_after
+
+            done = ep.step_count >= ep.max_steps
+            if done:
+                ep.status = EpisodeStatus.DONE
+
+            obs = ScholarObservation(
+                task_id=ep.task_id,
+                task_description=TASK_CONFIG[ep.task_id]["description"],
+                paper_id=paper.id,
+                available_references=ref_stubs,
+                citation_data=cdata,
+                step_count=ep.step_count,
+                max_steps=ep.max_steps,
+                hint=self.curriculum.hint(paper.id),
+            )
+            return {
+                "observation": obs.model_dump(),
+                "reward":      shaping_bonus,
+                "done":        done,
+                "info": {
+                    "action_type":   "check_citation",
+                    "citation_id":   cid,
+                    "found":         ref is not None,
+                    "shaping_bonus": shaping_bonus,
+                },
+            }
+
+        elif action.action_type == "submit_verdicts":
+            verdicts     = action.verdicts or []
+            ep.findings  = verdicts
+            ep.status    = EpisodeStatus.DONE
+
+            # Grade using CitationGrader
+            from server.citation_verifier import CitationGrader
+            refs_checked = len(ep.nav_state.sections_read)
+            grade = CitationGrader().grade(
+                verdicts, refs, refs_checked
+            )
+            score = grade["score"]
+
+            self.curriculum.update(
+                ep.paper_id, ep.task_id, score, grade["rule_results"]
+            )
+
+            obs = ScholarObservation(
+                task_id=ep.task_id,
+                task_description=TASK_CONFIG[ep.task_id]["description"],
+                paper_id=paper.id,
+                available_references=ref_stubs,
+                step_count=ep.step_count,
+                max_steps=ep.max_steps,
+                findings_so_far=verdicts,
+                feedback=(
+                    f"Score={score:.3f} | precision_valid={grade['precision_valid']:.3f} | "
+                    f"recall_ghost={grade['recall_invalid']:.3f} | "
+                    f"evidence={grade['evidence_score']:.3f}"
+                ),
+                cumulative_score=score,
+            )
+            return {
+                "observation": obs.model_dump(),
+                "reward":      score,
+                "done":        True,
+                "info":        grade,
+            }
+
+        return {"error": f"Unknown citation action_type: {action.action_type}"}
+
     def _initial_obs(
         self, paper: Paper, task_id: str, cfg: dict
     ) -> ScholarObservation:
@@ -426,6 +553,22 @@ class ScholarEnvironment:
                 paper_id=paper.id,
                 manuscript_text=ms_text,
                 style_guide=self.graders["formatting_compliance"].style_config,
+                step_count=0,
+                max_steps=cfg["max_steps"],
+                hint=self.curriculum.hint(paper.id),
+            )
+        if task_id == "citation_verification":
+            refs = paper.ground_truth.get("task4_citations", [])
+            ref_stubs = [
+                {"id": r["id"], "citation_number": r["citation_number"],
+                 "raw": r["raw"][:100]}
+                for r in refs
+            ]
+            return ScholarObservation(
+                task_id=task_id,
+                task_description=cfg["description"],
+                paper_id=paper.id,
+                available_references=ref_stubs,
                 step_count=0,
                 max_steps=cfg["max_steps"],
                 hint=self.curriculum.hint(paper.id),

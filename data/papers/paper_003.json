@@ -101,6 +101,49 @@
         "injected": false,
         "note": "CONSISTENT — control; should NOT be reported"
       }
+    ],
+    "task4_citations": [
+      {
+        "id": "ref_1",
+        "citation_number": "1",
+        "raw": "Crawshaw (2020). Multi-Task Learning with Deep Neural Networks: A Survey. arXiv.",
+        "status": "valid",
+        "year": 2020,
+        "injected": false
+      },
+      {
+        "id": "ref_2",
+        "citation_number": "2",
+        "raw": "Yu et al. (2020). Gradient Surgery for Multi-Task Learning. NeurIPS.",
+        "status": "valid",
+        "year": 2020,
+        "injected": false
+      },
+      {
+        "id": "ref_3",
+        "citation_number": "3",
+        "raw": "Raffel et al. (2020). Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer. JMLR.",
+        "status": "valid",
+        "year": 2020,
+        "injected": false
+      },
+      {
+        "id": "ref_4",
+        "citation_number": "4",
+        "raw": "Kumar & Singh (2024). OmniTask-7B: Solving All NLP Tasks Simultaneously. Nature Machine Intelligence.",
+        "status": "ghost",
+        "year": 2024,
+        "injected": true,
+        "note": "Ghost — implausible paper claim"
+      },
+      {
+        "id": "ref_5",
+        "citation_number": "5",
+        "raw": "Bach et al. (2022). PromptSource: An Integrated Development Environment and Repository for Natural Language Prompts. ACL.",
+        "status": "valid",
+        "year": 2022,
+        "injected": false
+      }
     ]
   }
 }

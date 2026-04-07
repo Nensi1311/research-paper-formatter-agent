@@ -89,6 +89,74 @@
         "injected": true,
         "note": "Abstract inflated by 2.6 points vs Table 1 Average"
       }
+    ],
+    "task4_citations": [
+      {
+        "id": "ref_1",
+        "citation_number": "1",
+        "raw": "Devlin et al. (2018). BERT: Pre-training of Deep Bidirectional Transformers. NAACL.",
+        "status": "valid",
+        "authors": [
+          "Devlin",
+          "Chang",
+          "Lee",
+          "Toutanova"
+        ],
+        "year": 2018,
+        "injected": false,
+        "note": "Real paper — agents should mark as valid"
+      },
+      {
+        "id": "ref_2",
+        "citation_number": "2",
+        "raw": "Liu et al. (2019). RoBERTa: A Robustly Optimized BERT Pretraining Approach. arXiv.",
+        "status": "valid",
+        "authors": [
+          "Liu",
+          "Ott",
+          "Goyal"
+        ],
+        "year": 2019,
+        "injected": false,
+        "note": "Real paper"
+      },
+      {
+        "id": "ref_3",
+        "citation_number": "3",
+        "raw": "Zhang et al. (2023). SuperBERT: Achieving 99.8% on All NLP Tasks. ICML 2023.",
+        "status": "ghost",
+        "authors": [
+          "Zhang"
+        ],
+        "year": 2023,
+        "injected": true,
+        "note": "Ghost citation — fabricated paper, implausible claim"
+      },
+      {
+        "id": "ref_4",
+        "citation_number": "4",
+        "raw": "Joshi et al. (2020). SpanBERT. TACL.",
+        "status": "valid",
+        "authors": [
+          "Joshi",
+          "Chen",
+          "Liu"
+        ],
+        "year": 2020,
+        "injected": false
+      },
+      {
+        "id": "ref_5",
+        "citation_number": "5",
+        "raw": "Loshchilov & Hutter (2019). Decoupled Weight Decay Regularization. ICLR.",
+        "status": "valid",
+        "authors": [
+          "Loshchilov",
+          "Hutter"
+        ],
+        "year": 2019,
+        "injected": false
+      }
     ]
   }
 }
