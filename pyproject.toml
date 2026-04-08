@@ -1,15 +1,21 @@
 [build-system]
-requires = ["setuptools>=68"]
-build-backend = "setuptools.backends.legacy:build"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
 [project]
-name            = "scholar-env"
-version         = "0.4.0"
-description     = "OpenEnv environment for scholarly integrity verification"
-readme          = "README.md"
-license         = {text = "Apache-2.0"}
+name = "scholar-env"
+version = "0.4.0"
+description = "OpenEnv environment for scholarly integrity verification"
+readme = "README.md"
 requires-python = ">=3.10"
-dependencies    = [
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "Nensi Pansuriya"},
+    {name = "Krushna Parmar"},
+    {name = "Ishita Bhojani"}
+]
+keywords = ["openenv", "nlp", "research-integrity", "peer-review", "rl-environment"]
+dependencies = [
     "fastapi>=0.110.0",
     "uvicorn[standard]>=0.29.0",
     "pydantic>=2.6.0",
@@ -20,16 +26,11 @@ dependencies    = [
 ]
 
 [project.scripts]
-scholar-env-server = "server.app:main"
-serve              = "server.app:main"
-start              = "server.app:main"
+server = "server.app:main"
 
-[project.optional-dependencies]
-dev = ["pytest", "pytest-asyncio"]
+[project.urls]
+"Homepage" = "https://huggingface.co/spaces/flyingmaverick/scholar-env"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["server*", "server.*"]
-
-[tool.ruff]
-line-length = 100
+[tool.setuptools]
+py-modules = ["corpus", "models", "inference"]
+packages = ["server", "server.graders", "scripts", "tests"]
