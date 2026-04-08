@@ -109,6 +109,12 @@ TASK_CONFIG: dict[str, dict] = {
 }
 
 
+
+
+def _clamp(score: float) -> float:
+    """Ensure score is strictly between 0 and 1 (exclusive) as required by validator."""
+    return round(max(1e-4, min(score, 1 - 1e-4)), 4)
+
 # ── Episode state ─────────────────────────────────────────────────────────────
 
 @dataclass
@@ -282,7 +288,7 @@ class ScholarEnvironment:
         )
         return {
             "observation": obs.model_dump(),
-            "reward":      result.score,
+            "reward":      _clamp(result.score),
             "done":        done,
             "info": {
                 "stage_1":        result.stage_1_score,
@@ -368,7 +374,7 @@ class ScholarEnvironment:
         )
         return {
             "observation": obs.model_dump(),
-            "reward":      shaping_bonus,
+            "reward":      _clamp(shaping_bonus),
             "done":        done,
             "info": {
                 "action_type":   action.action_type,
@@ -429,7 +435,7 @@ class ScholarEnvironment:
         )
         return {
             "observation": obs.model_dump(),
-            "reward":      result.score,
+            "reward":      _clamp(result.score),
             "done":        True,
             "info":        info,
         }
@@ -491,7 +497,7 @@ class ScholarEnvironment:
             )
             return {
                 "observation": obs.model_dump(),
-                "reward":      shaping_bonus,
+                "reward":      _clamp(shaping_bonus),
                 "done":        done,
                 "info": {
                     "action_type":   "check_citation",
@@ -535,7 +541,7 @@ class ScholarEnvironment:
             )
             return {
                 "observation": obs.model_dump(),
-                "reward":      score,
+                "reward":      _clamp(score),
                 "done":        True,
                 "info":        grade,
             }
