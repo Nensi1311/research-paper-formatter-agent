@@ -21,12 +21,15 @@ dependencies    = [
 
 [project.scripts]
 scholar-env-server = "server.app:main"
+serve              = "server.app:main"
+start              = "server.app:main"
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio"]
 
 [tool.setuptools.packages.find]
 where = ["."]
+include = ["server*", "server.*"]
 
 [tool.ruff]
 line-length = 100
