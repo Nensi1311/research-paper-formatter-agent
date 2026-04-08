@@ -1,112 +1,119 @@
-name: paper-formatter-v1
-version: "1.0.0"
+name: scholar-env
+version: "0.4.0"
 description: >
-  An OpenEnv environment where AI agents learn to reformat academic research papers
-  between conference and journal submission formats (IEEE, ACM, NeurIPS, ICML, AAAI, arXiv).
-  The agent must identify formatting violations and apply targeted actions to bring the
-  paper into full compliance with the target conference's style guide.
+  ScholarEnv is an OpenEnv environment simulating the scholarly publishing
+  integrity pipeline. An AI agent acts as a research integrity auditor,
+  progressing from formatting compliance through internal consistency checking,
+  claim-evidence auditing, and citation verification — the first RL environment
+  for AI-assisted peer review. Task 3 scores 0.20–0.45 for frontier models,
+  providing genuine training signal that prompting alone cannot achieve.
 
 domain: academic_publishing
+license: Apache-2.0
+baseline_script: inference.py
+
+authors:
+  - name: Nensi Pansuriya
+  - name: Krushna Parmar
+  - name: Ishita Bhojani
+
 tags:
   - openenv
   - nlp
-  - document-formatting
+  - document-understanding
+  - research-integrity
+  - peer-review
   - academic
-  - real-world
+  - rl-environment
+  - citation-verification
 
-authors:
-  - name: Paper Formatter Team
-    email: team@example.com
+tasks:
+  - id: formatting_compliance
+    name: "IEEE Manuscript Formatting Compliance"
+    description: >
+      Reformat a badly-formatted manuscript to IEEE style. Fix title,
+      abstract length, section order, citations, captions, author block.
+    difficulty: easy
+    interaction_type: single_shot
+    max_steps: 3
+    expected_frontier_score: "0.80-0.95"
+    success_threshold: 0.80
 
-license: Apache-2.0
+  - id: internal_consistency
+    name: "Internal Consistency Verification"
+    description: >
+      Find internal contradictions — number mismatches, nonexistent
+      figure/table references, inconsistent contribution counts.
+      Multi-step navigation + submit. F-beta rewards precision.
+    difficulty: medium
+    interaction_type: multi_step
+    max_steps: 4
+    expected_frontier_score: "0.40-0.65"
+    success_threshold: 0.50
 
-observation_space:
-  type: structured
-  description: >
-    A PaperObservation object describing the paper's current formatting state,
-    including sections, references, authors, abstract word count, column layout,
-    citation style, compliance score, and list of open formatting issues.
-  fields:
-    paper_id: string
-    paper_title: string
-    current_format: enum[IEEE, ACM, NeurIPS, ICML, AAAI, arXiv]
-    target_format: enum[IEEE, ACM, NeurIPS, ICML, AAAI, arXiv]
-    target_spec: FormatSpec
-    sections: list[Section]
-    section_order: list[string]
-    references: list[Reference]
-    authors: list[AuthorInfo]
-    abstract_word_count: integer
-    column_layout: integer
-    title_case_style: string
-    citation_style: enum[numeric, author_year]
-    compliance_score: float[0.0, 1.0]
-    issues: list[string]
-    fixed_issues: list[string]
-    steps_taken: integer
-    max_steps: integer
-    done: boolean
+  - id: claim_evidence_audit
+    name: "Claim-Evidence Discrepancy Audit"
+    description: >
+      Find places where text claims don't match referenced table values.
+      Strategic multi-step navigation required. PBRS intermediate rewards.
+      RL discovers optimal traversal strategy — prompting cannot.
+    difficulty: hard
+    interaction_type: multi_step
+    max_steps: 6
+    expected_frontier_score: "0.20-0.45"
+    success_threshold: 0.35
+
+  - id: citation_verification
+    name: "Reference Citation Verification"
+    description: >
+      Verify whether cited papers actually exist and are correctly attributed.
+      Agent checks citations via check_citation actions (CrossRef/arXiv DB),
+      then submits verdicts (valid/ghost/misattributed). SQLite cache
+      accumulates verified citations across episodes.
+    difficulty: medium
+    interaction_type: multi_step
+    max_steps: 8
+    expected_frontier_score: "0.35-0.60"
+    success_threshold: 0.50
 
 action_space:
   type: structured
   description: >
-    Discrete action type with typed parameters. Agent selects an action_type
-    and provides a parameters dict with the relevant formatting change.
-  actions:
-    - set_format
-    - rename_section
-    - reorder_sections
-    - format_references
-    - set_title_case
-    - set_abstract_word_limit
-    - remove_section
-    - add_section
-    - format_author_list
-    - set_column_layout
-    - format_citations
-    - submit
+    Tasks 1: FormattingAction — submit full formatted manuscript text.
+    Tasks 2/3: ScholarAction — navigate (query_section, check_table,
+    extract_claims) then submit_findings.
+    Task 4: CitationAction — check_citation then submit_verdicts.
+  discriminator_field: task
+
+observation_space:
+  type: structured
+  fields:
+    - {name: task_id, type: string}
+    - {name: task_description, type: string}
+    - {name: paper_id, type: string}
+    - {name: manuscript_text, type: string, note: "Task 1 initial obs only"}
+    - {name: style_guide, type: object, note: "Task 1 IEEE rules"}
+    - {name: available_sections, type: array}
+    - {name: available_tables, type: array}
+    - {name: available_references, type: array, note: "Task 4"}
+    - {name: current_section_content, type: string}
+    - {name: current_table_content, type: object}
+    - {name: extracted_claims, type: array}
+    - {name: citation_data, type: object, note: "Task 4 citation details"}
+    - {name: findings_so_far, type: array}
+    - {name: step_count, type: integer}
+    - {name: max_steps, type: integer}
+    - {name: feedback, type: string}
+    - {name: hint, type: string}
+    - {name: cumulative_score, type: float}
 
 reward:
   type: continuous
   range: [0.0, 1.0]
   description: >
-    Composite reward with partial credit across 6 dimensions:
-    section structure (30%), reference format (20%), abstract compliance (15%),
-    author format (15%), layout (10%), citation style (10%).
-    Small step penalty to encourage efficiency.
-
-tasks:
-  - id: task_easy
-    name: "NeurIPS to IEEE Conversion"
-    difficulty: easy
-    max_steps: 8
-    success_threshold: 0.85
-    description: >
-      Convert a NeurIPS-formatted paper to IEEE style.
-      Fix abstract length (≤150 words), switch to 2-column layout,
-      convert citations to numeric style, and update reference formatting.
-
-  - id: task_medium
-    name: "ACM Systems to NeurIPS Conversion"
-    difficulty: medium
-    max_steps: 12
-    success_threshold: 0.80
-    description: >
-      Convert an ACM systems paper to NeurIPS format.
-      Fix abbreviated author names, remove numeric section prefixes,
-      merge duplicate Related Work sections, switch to single-column layout,
-      convert to author-year citations.
-
-  - id: task_hard
-    name: "IEEE to ICML Full Reformat"
-    difficulty: hard
-    max_steps: 15
-    success_threshold: 0.75
-    description: >
-      Full reformat from IEEE to ICML.
-      Fix ALL-CAPS title, IEEE section naming (roman numerals),
-      abbreviated author names, numeric citations, IEEE reference style,
-      and section ordering — 7+ distinct issues to resolve.
+    Task 1: Progressive Reward Shaping (PRS) 3-stage unlock.
+    Tasks 2/3: F-beta(beta=0.5) + PBRS intermediate + coverage bonus.
+    Task 4: precision_valid + recall_invalid + evidence_score.
 
 endpoints:
   reset: POST /reset
@@ -117,13 +124,13 @@ endpoints:
   tasks: GET /tasks
 
 docker:
-  build: docker build -t paper-formatter-env .
-  run: docker run -p 7860:7860 paper-formatter-env
+  build: docker build -t scholar-env .
+  run: docker run -p 7860:7860 scholar-env
 
 huggingface:
-  space: paper-formatter-openenv
+  space: scholar-env
   sdk: docker
   tags:
     - openenv
-    - paper-formatting
+    - research-integrity
     - rl-environment

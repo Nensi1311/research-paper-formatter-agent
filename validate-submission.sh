@@ -1,21 +1,12 @@
 #!/usr/bin/env bash
 #
-# validate-submission.sh — Paper Formatter OpenEnv Submission Validator
+# validate-submission.sh — ScholarEnv Pre-Submission Validator
+# Mirrors the OFFICIAL hackathon 3-step script exactly.
 #
-# Checks:
-#   1. HF Space is live and responds to /reset
-#   2. Docker image builds successfully
-#   3. openenv validate passes (or local yaml check)
-#
-# Usage:
-#   ./validate-submission.sh <hf_space_url> [repo_dir]
-#
-# Example:
-#   ./validate-submission.sh https://your-username-paper-formatter-openenv.hf.space .
+# Usage: ./validate-submission.sh <hf_space_url> [repo_dir]
 #
 
 set -uo pipefail
-
 DOCKER_BUILD_TIMEOUT=600
 
 if [ -t 1 ]; then
@@ -29,8 +20,6 @@ run_with_timeout() {
   local secs="$1"; shift
   if command -v timeout &>/dev/null; then
     timeout "$secs" "$@"
-  elif command -v gtimeout &>/dev/null; then
-    gtimeout "$secs" "$@"
   else
     "$@" & local pid=$!
     ( sleep "$secs" && kill "$pid" 2>/dev/null ) & local watcher=$!
@@ -39,149 +28,82 @@ run_with_timeout() {
   fi
 }
 
-CLEANUP_FILES=()
-cleanup() { rm -f "${CLEANUP_FILES[@]+"${CLEANUP_FILES[@]}"}"; }
-trap cleanup EXIT
-
 PING_URL="${1:-}"
 REPO_DIR="${2:-.}"
-
-if [ -z "$PING_URL" ]; then
-  printf "Usage: %s <ping_url> [repo_dir]\n" "$0"
-  printf "  ping_url   HuggingFace Space URL (e.g. https://user-paper-formatter-openenv.hf.space)\n"
-  printf "  repo_dir   Path to repo (default: current directory)\n"
-  exit 1
-fi
-
-if ! REPO_DIR="$(cd "$REPO_DIR" 2>/dev/null && pwd)"; then
-  printf "Error: directory '%s' not found\n" "${2:-.}"; exit 1
-fi
-
+[ -z "$PING_URL" ] && { printf "Usage: %s <hf_space_url> [repo_dir]\n" "$0"; exit 1; }
+REPO_DIR="$(cd "$REPO_DIR" 2>/dev/null && pwd)" || { printf "Error: dir not found\n"; exit 1; }
 PING_URL="${PING_URL%/}"
-PASS=0
 
 log()  { printf "[%s] %b\n" "$(date -u +%H:%M:%S)" "$*"; }
-pass() { log "${GREEN}PASSED${NC} -- $1"; PASS=$((PASS + 1)); }
-fail() { log "${RED}FAILED${NC} -- $1"; }
+pass() { log "${GREEN}PASSED${NC} — $1"; }
+fail() { log "${RED}FAILED${NC} — $1"; }
 hint() { printf "  ${YELLOW}Hint:${NC} %b\n" "$1"; }
-stop_at() {
-  printf "\n${RED}${BOLD}Validation stopped at %s.${NC} Fix the above before continuing.\n" "$1"
-  exit 1
-}
+stop_at() { printf "\n${RED}${BOLD}Stopped at %s.${NC}\n" "$1"; exit 1; }
 
-printf "\n${BOLD}============================================${NC}\n"
-printf "${BOLD}  Paper Formatter OpenEnv — Validator${NC}\n"
-printf "${BOLD}============================================${NC}\n"
-log "Repo:     $REPO_DIR"
-log "Ping URL: $PING_URL"
-printf "\n"
+printf "\n${BOLD}========================================${NC}\n"
+printf "${BOLD}  ScholarEnv Pre-Submission Validator${NC}\n"
+printf "${BOLD}========================================${NC}\n\n"
 
-# ── Step 1: HF Space health ──
-log "${BOLD}Step 1/4: Pinging HF Space${NC} ($PING_URL/health) ..."
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$PING_URL/health" --max-time 30 2>/dev/null || echo "000")
+# Step 1: HF Space /reset returns 200
+log "${BOLD}Step 1/3: HF Space /reset endpoint${NC} ..."
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"task_id":"formatting_compliance"}' \
+  "$PING_URL/reset" --max-time 30 2>/dev/null || echo "000")
 
 if [ "$HTTP_CODE" = "200" ]; then
-  pass "HF Space /health responds 200"
+  pass "/reset returns 200"
 else
-  fail "HF Space /health returned HTTP $HTTP_CODE (expected 200)"
-  hint "Check your Space is running: open $PING_URL in browser"
+  fail "/reset returned HTTP $HTTP_CODE (expected 200)"
+  hint "Make sure your Space is running and the URL is correct."
+  hint "Try opening $PING_URL in your browser first."
   stop_at "Step 1"
 fi
 
-# ── Step 1b: /reset endpoint ──
-log "${BOLD}Step 1b: Testing /reset endpoint${NC} ..."
-RESET_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"task_id":"task_easy"}' \
-  "$PING_URL/reset" --max-time 30 2>/dev/null || echo "000")
-
-if [ "$RESET_CODE" = "200" ]; then
-  pass "/reset returns 200"
-else
-  fail "/reset returned HTTP $RESET_CODE"
-  hint "Ensure task_easy is implemented in tasks.py"
-  stop_at "Step 1b"
-fi
-
-# ── Step 2: openenv.yaml check ──
-log "${BOLD}Step 2/4: Checking openenv.yaml${NC} ..."
-YAML_FILE="$REPO_DIR/openenv.yaml"
-if [ ! -f "$YAML_FILE" ]; then
-  fail "openenv.yaml not found in $REPO_DIR"
-  stop_at "Step 2"
-fi
-
-# Check required keys
-REQUIRED_KEYS="name version description tasks endpoints"
-for key in $REQUIRED_KEYS; do
-  if grep -q "^${key}:" "$YAML_FILE"; then
-    : # ok
-  else
-    fail "openenv.yaml missing required key: $key"
-    stop_at "Step 2"
-  fi
-done
-
-# Check 3+ tasks
-TASK_COUNT=$(grep -c "^  - id:" "$YAML_FILE" || echo 0)
-if [ "$TASK_COUNT" -ge 3 ]; then
-  pass "openenv.yaml valid with $TASK_COUNT tasks"
-else
-  fail "openenv.yaml has only $TASK_COUNT tasks (need >= 3)"
-  stop_at "Step 2"
-fi
-
-# ── Step 3: Local tests ──
-log "${BOLD}Step 3/4: Running local test suite${NC} ..."
-if command -v python3 &>/dev/null && [ -f "$REPO_DIR/tests/test_environment.py" ]; then
-  TEST_OUTPUT=$(cd "$REPO_DIR" && python3 tests/test_environment.py 2>&1)
-  if echo "$TEST_OUTPUT" | grep -q "ALL TESTS PASSED"; then
-    PASSED=$(echo "$TEST_OUTPUT" | grep "Results:" | grep -o "[0-9]*/[0-9]*")
-    pass "All local tests passed ($PASSED)"
-  else
-    fail "Some tests failed"
-    echo "$TEST_OUTPUT" | tail -20
-    stop_at "Step 3"
-  fi
-else
-  log "  ${YELLOW}Skipping local tests${NC} (python3 not found or test file missing)"
-fi
-
-# ── Step 4: Docker build ──
-log "${BOLD}Step 4/4: Running docker build${NC} ..."
+# Step 2: Docker build
+log "${BOLD}Step 2/3: Docker build${NC} ..."
 if ! command -v docker &>/dev/null; then
-  log "  ${YELLOW}Skipping local docker build${NC} (docker not found locally)"
-  log "  ${GREEN}Note:${NC} Since Step 1 passed, we know your Docker build works on Hugging Face!"
-  # We proceed to the success message
-else
-
-DOCKERFILE=""
+  fail "docker not found"
+  hint "Install Docker: https://docs.docker.com/get-docker/"
+  stop_at "Step 2"
+fi
 if [ -f "$REPO_DIR/Dockerfile" ]; then
-  DOCKERFILE="$REPO_DIR"
+  DOCKER_CONTEXT="$REPO_DIR"
 elif [ -f "$REPO_DIR/server/Dockerfile" ]; then
-  DOCKERFILE="$REPO_DIR/server"
+  DOCKER_CONTEXT="$REPO_DIR/server"
 else
-  fail "No Dockerfile found in $REPO_DIR or $REPO_DIR/server"
-  stop_at "Step 4"
+  fail "No Dockerfile found"
+  stop_at "Step 2"
 fi
 
 BUILD_OK=false
-BUILD_OUTPUT=$(run_with_timeout "$DOCKER_BUILD_TIMEOUT" \
-  docker build -t paper-formatter-env-test "$DOCKERFILE" 2>&1) && BUILD_OK=true
-
+BUILD_OUTPUT=$(run_with_timeout "$DOCKER_BUILD_TIMEOUT" docker build "$DOCKER_CONTEXT" 2>&1) && BUILD_OK=true
 if [ "$BUILD_OK" = true ]; then
   pass "Docker build succeeded"
-  # Clean up image
-  docker rmi paper-formatter-env-test >/dev/null 2>&1 || true
 else
-  fail "Docker build failed (timeout=${DOCKER_BUILD_TIMEOUT}s)"
-  echo "$BUILD_OUTPUT" | tail -25
-  stop_at "Step 4"
-fi
+  fail "Docker build failed"
+  printf "%s\n" "$BUILD_OUTPUT" | tail -20
+  stop_at "Step 2"
 fi
 
-printf "\n${BOLD}============================================${NC}\n"
-printf "${GREEN}${BOLD}  All 4/4 checks passed!${NC}\n"
-printf "${GREEN}${BOLD}  Your submission is ready to submit.${NC}\n"
-printf "${BOLD}============================================${NC}\n\n"
+# Step 3: openenv validate
+log "${BOLD}Step 3/3: openenv validate${NC} ..."
+if ! command -v openenv &>/dev/null; then
+  fail "openenv not found — install: pip install openenv-core"
+  stop_at "Step 3"
+fi
+VALIDATE_OK=false
+VALIDATE_OUTPUT=$(cd "$REPO_DIR" && openenv validate 2>&1) && VALIDATE_OK=true
+if [ "$VALIDATE_OK" = true ]; then
+  pass "openenv validate passed"
+  [ -n "$VALIDATE_OUTPUT" ] && log "  $VALIDATE_OUTPUT"
+else
+  fail "openenv validate failed"
+  printf "%s\n" "$VALIDATE_OUTPUT"
+  stop_at "Step 3"
+fi
+
+printf "\n${BOLD}========================================${NC}\n"
+printf "${GREEN}${BOLD}  All 3/3 checks passed! Ready to submit.${NC}\n"
+printf "${BOLD}========================================${NC}\n\n"
 exit 0

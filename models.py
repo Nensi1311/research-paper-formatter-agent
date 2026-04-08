@@ -1,211 +1,147 @@
 """
-Typed Pydantic models for the Research Paper Formatter OpenEnv environment.
-Defines Observation, Action, Reward, and State models per OpenEnv spec.
-"""
+models.py — Canonical Pydantic models for ScholarEnv v0.4.
 
+Authors: Nensi Pansuriya, Krushna Parmar, Ishita Bhojani
+
+Design:
+  1. AnyAction uses Annotated discriminated union on 'task' field.
+  2. ScholarObservation covers all 4 tasks with Optional fields.
+  3. CitationAction supports Task 4 (citation_verification).
+  4. No circular imports — models.py imports nothing from server/.
+
+References:
+  PRS  — arxiv 2512.07478
+  PBRS — Ng, Harada & Russell 1999
+  AdaRFT — arxiv 2504.05520
+  Veri-R1 — arxiv 2510.01932 (Task 4 design)
+"""
 from __future__ import annotations
 
-import enum
-from typing import Any, Dict, List, Optional
+from enum import Enum
+from typing import Annotated, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
 
-# ──────────────────────────────────────────────
-# Enums
-# ──────────────────────────────────────────────
+# ── Enums ─────────────────────────────────────────────────────────────────────
 
-class ConferenceFormat(str, enum.Enum):
-    IEEE = "IEEE"
-    ACM = "ACM"
-    NeurIPS = "NeurIPS"
-    ICML = "ICML"
-    AAAI = "AAAI"
-    ARXIV = "arXiv"
-    SPRINGER = "Springer"
-    ELSEVIER = "Elsevier"
+class EpisodeStatus(str, Enum):
+    ACTIVE = "active"
+    DONE   = "done"
 
 
-class SectionType(str, enum.Enum):
-    TITLE = "title"
-    ABSTRACT = "abstract"
-    INTRODUCTION = "introduction"
-    RELATED_WORK = "related_work"
-    METHODOLOGY = "methodology"
-    EXPERIMENTS = "experiments"
-    RESULTS = "results"
-    CONCLUSION = "conclusion"
-    REFERENCES = "references"
-    ACKNOWLEDGMENTS = "acknowledgments"
-    APPENDIX = "appendix"
+# ── Actions ───────────────────────────────────────────────────────────────────
+
+class FormattingAction(BaseModel):
+    """Task 1: submit the fully reformatted manuscript."""
+    task: Literal["formatting_compliance"] = "formatting_compliance"
+    formatted_text: str = Field(
+        description="Complete reformatted manuscript as a single string."
+    )
 
 
-class ActionType(str, enum.Enum):
-    SET_FORMAT = "set_format"
-    RENAME_SECTION = "rename_section"
-    REORDER_SECTIONS = "reorder_sections"
-    FORMAT_REFERENCES = "format_references"
-    SET_TITLE_CASE = "set_title_case"
-    SET_ABSTRACT_WORD_LIMIT = "set_abstract_word_limit"
-    REMOVE_SECTION = "remove_section"
-    ADD_SECTION = "add_section"
-    FORMAT_AUTHOR_LIST = "format_author_list"
-    SET_COLUMN_LAYOUT = "set_column_layout"
-    FORMAT_CITATIONS = "format_citations"
-    SUBMIT = "submit"
+class ScholarAction(BaseModel):
+    """Tasks 2 & 3: navigate the paper or submit findings."""
+    task: Literal["internal_consistency", "claim_evidence_audit"]
+    action_type: Literal[
+        "query_section",
+        "check_table",
+        "extract_claims",
+        "submit_findings",
+    ]
+    section_name: Optional[str] = Field(default=None)
+    table_id:     Optional[str] = Field(default=None)
+    findings:     Optional[list[dict]] = Field(default=None)
 
 
-# ──────────────────────────────────────────────
-# Sub-models
-# ──────────────────────────────────────────────
-
-class Section(BaseModel):
-    name: str
-    section_type: SectionType
-    word_count: int = 0
-    content_snippet: str = ""  # first 200 chars
-    has_figures: bool = False
-    has_tables: bool = False
-    has_equations: bool = False
-
-
-class Reference(BaseModel):
-    index: int
-    authors: List[str]
-    title: str
-    venue: str
-    year: int
-    style: str = "unknown"  # e.g. "IEEE", "APA", "MLA"
+class CitationAction(BaseModel):
+    """Task 4: verify citations in paper reference list."""
+    task: Literal["citation_verification"] = "citation_verification"
+    action_type: Literal[
+        "check_citation",   # → returns citation_data in obs
+        "submit_verdicts",  # → final grade, done=True
+    ]
+    citation_id: Optional[str] = Field(
+        default=None,
+        description="Reference ID for check_citation, e.g. 'ref_1'"
+    )
+    verdicts: Optional[list[dict]] = Field(
+        default=None,
+        description=(
+            "For submit_verdicts. Each dict: "
+            "citation_id, status (valid|ghost|misattributed), issue, confidence."
+        ),
+    )
 
 
-class AuthorInfo(BaseModel):
-    name: str
-    affiliation: str
-    email: Optional[str] = None
-    order: int = 0
+# Discriminated union — FastAPI deserialises on the 'task' field
+AnyAction = Annotated[
+    Union[FormattingAction, ScholarAction, CitationAction],
+    Field(discriminator="task"),
+]
 
 
-class FormatSpec(BaseModel):
-    """Describes what a valid submission looks like for a given conference."""
-    conference: ConferenceFormat
-    required_sections: List[SectionType]
-    forbidden_sections: List[SectionType] = Field(default_factory=list)
-    section_order: List[SectionType]
-    max_abstract_words: int
-    reference_style: str          # e.g. "IEEE", "ACL", "APA"
-    author_format: str            # e.g. "First Last", "F. Last"
-    columns: int                  # 1 or 2
-    title_case: str               # "title_case" | "sentence_case" | "upper"
-    max_pages: Optional[int] = None
-    citation_style: str = "numeric"  # "numeric" | "author_year"
+# ── Observation ───────────────────────────────────────────────────────────────
+
+class ScholarObservation(BaseModel):
+    """Unified observation returned by reset() and every step()."""
+
+    # Always present
+    task_id:          str
+    task_description: str
+    paper_id:         str
+    step_count:       int   = 0
+    max_steps:        int   = 3
+    cumulative_score: float = 0.0
+    feedback:         str   = ""
+    hint:             str   = ""
+
+    # Task 1 only
+    manuscript_text: Optional[str] = Field(
+        default=None,
+        description="Badly-formatted manuscript (Task 1 initial observation)."
+    )
+    style_guide: Optional[dict] = Field(
+        default=None,
+        description="IEEE style rule config."
+    )
+
+    # Tasks 2 & 3 — navigation
+    available_sections:      list[str]          = Field(default_factory=list)
+    available_tables:        list[str]          = Field(default_factory=list)
+    current_section_content: Optional[str]      = None
+    current_table_content:   Optional[dict]     = None
+    extracted_claims:        Optional[list[dict]] = None
+    findings_so_far:         list[dict]          = Field(default_factory=list)
+
+    # Task 4 — citation verification
+    available_references: list[dict] = Field(
+        default_factory=list,
+        description="Task 4: list of {id, citation_number, raw} dicts."
+    )
+    citation_data: Optional[dict] = Field(
+        default=None,
+        description="Task 4: returned after check_citation action."
+    )
 
 
-# ──────────────────────────────────────────────
-# Core OpenEnv models
-# ──────────────────────────────────────────────
+# ── Reward (logging / documentation only) ────────────────────────────────────
 
-class PaperObservation(BaseModel):
-    """What the agent sees at each step."""
-
-    # Paper identity
-    paper_id: str
-    paper_title: str
-
-    # Current state of the paper
-    current_format: Optional[ConferenceFormat]
-    target_format: ConferenceFormat
-    target_spec: FormatSpec
-
-    # Structural state
-    sections: List[Section]
-    section_order: List[str]          # current section names in order
-    references: List[Reference]
-    authors: List[AuthorInfo]
-    abstract_word_count: int
-    column_layout: int                # 1 or 2
-    title_case_style: str
-    citation_style: str
-
-    # Progress signals
-    compliance_score: float           # 0.0–1.0 running compliance
-    issues: List[str]                 # list of current format violations
-    fixed_issues: List[str]           # issues resolved so far
-    steps_taken: int
-    max_steps: int
-
-    # Episode info
-    task_id: str
-    done: bool = False
-
-
-class PaperAction(BaseModel):
-    """Actions the agent can take to format the paper."""
-
-    action_type: ActionType
-    parameters: Dict[str, Any] = Field(default_factory=dict)
-
-    class Config:
-        json_schema_extra = {
-            "examples": [
-                {"action_type": "set_format", "parameters": {"format": "IEEE"}},
-                {"action_type": "rename_section", "parameters": {"old_name": "Experiments", "new_name": "Evaluation"}},
-                {"action_type": "reorder_sections", "parameters": {"order": ["introduction", "related_work", "methodology"]}},
-                {"action_type": "format_references", "parameters": {"style": "IEEE"}},
-                {"action_type": "submit", "parameters": {}},
-            ]
-        }
-
-
-class PaperReward(BaseModel):
-    """Reward with decomposed partial-credit signals."""
-
+class ScholarReward(BaseModel):
+    """Full reward breakdown — logged in step info dict."""
     total: float = Field(ge=0.0, le=1.0)
-
-    # Decomposed components (each 0.0–1.0)
-    section_structure_score: float = 0.0
-    reference_format_score: float = 0.0
-    abstract_compliance_score: float = 0.0
-    author_format_score: float = 0.0
-    layout_score: float = 0.0
-    citation_style_score: float = 0.0
-
-    # Step penalty (discourages wasted actions)
-    step_penalty: float = 0.0
-
-    # Bonus for clean single-step fix
-    efficiency_bonus: float = 0.0
-
-    info: str = ""
-
-
-class EpisodeState(BaseModel):
-    """Full internal state — returned by state()."""
-
-    paper_id: str
-    task_id: str
-    current_format: Optional[ConferenceFormat]
-    target_format: ConferenceFormat
-    target_spec: FormatSpec
-    sections: List[Section]
-    section_order: List[str]
-    references: List[Reference]
-    authors: List[AuthorInfo]
-    abstract_word_count: int
-    column_layout: int
-    title_case_style: str
-    citation_style: str
-    steps_taken: int
-    max_steps: int
-    cumulative_reward: float
-    action_history: List[Dict[str, Any]]
-    issue_history: List[List[str]]
-    done: bool
-
-
-class StepResult(BaseModel):
-    """Return value of step()."""
-
-    observation: PaperObservation
-    reward: float
-    done: bool
-    info: Dict[str, Any] = Field(default_factory=dict)
+    # Task 1 — PRS stages
+    stage_1_score: float = 0.0
+    stage_2_score: float = 0.0
+    stage_3_score: float = 0.0
+    # Tasks 2 & 3 — F-beta
+    f_beta:               float = 0.0
+    precision:            float = 0.0
+    recall:               float = 0.0
+    evidence_specificity: float = 0.0
+    coverage_bonus:       float = 0.0
+    shaping_bonus:        float = 0.0
+    # Task 4 — citation
+    precision_valid:      float = 0.0
+    recall_ghost:         float = 0.0
+    rule_breakdown: dict[str, float] = Field(default_factory=dict)

@@ -1,0 +1,162 @@
+{
+  "id": "paper_001",
+  "title": "LanguageNet: A Multi-Task Pre-Training Framework for Natural Language Understanding",
+  "source": "arxiv:synthetic_001",
+  "license": "CC-BY 4.0",
+  "difficulty_score": 0.35,
+  "sections": {
+    "abstract": "We present LanguageNet, a multi-task pre-training framework for natural language understanding (NLU). Our model achieves state-of-the-art results on the GLUE benchmark, reaching an overall score of 94.3, outperforming prior methods by 2.1 points. The model was trained on 128 billion tokens using a mixture of masked language modelling, next sentence prediction, and span boundary objectives. We evaluate across eight downstream tasks and report consistent improvements. LanguageNet demonstrates that joint training across heterogeneous NLU tasks provides complementary supervision signals that improve generalisation. We release model weights and training code to facilitate reproducibility.",
+    "introduction": "Natural language understanding (NLU) encompasses a wide range of tasks including sentiment analysis, textual entailment, and question answering. The GLUE benchmark (Wang et al., 2018) provides a standardised evaluation suite across eight tasks. Recent models such as BERT [1], RoBERTa [2], and DeBERTa [3] have pushed performance significantly. In this work, we propose LanguageNet, which extends the pre-training paradigm with three complementary objectives. Our main contributions are as follows: (1) a novel multi-task pre-training objective combining three learning signals, (2) a curriculum scheduling strategy that adapts task weights during training, and (3) comprehensive ablation studies demonstrating the contribution of each component. We achieve a GLUE score of 94.3, establishing a new state of the art.",
+    "methods": "LanguageNet is built on a 340M parameter transformer architecture. We use a vocabulary of 50,265 byte-pair encoding (BPE) tokens. Pre-training uses three objectives simultaneously: (1) masked language modelling (MLM) with a masking probability of 15%, (2) next sentence prediction (NSP), and (3) span boundary objective (SBO) [4]. Training runs for 1 million steps on 128 billion tokens drawn from a mixture of BookCorpus, English Wikipedia, CC-News, and OpenWebText. We use the AdamW optimiser [5] with a peak learning rate of 1e-4, linear warmup over 10,000 steps, and polynomial decay. Batch size is 8,192 sequences of 512 tokens. Fine-tuning follows the standard protocol: we add a task-specific classification head and train for 3 epochs with a learning rate of 2e-5.",
+    "results": "Table 1 reports GLUE benchmark results. LanguageNet achieves an average score of 91.7 across all eight tasks, with particular strength on MNLI (90.2) and QQP (92.5). On the SST-2 sentiment task, our model reaches 97.1 accuracy. Table 2 presents ablation results showing the contribution of each pre-training objective. Removing SBO reduces GLUE score by 1.8 points, while removing NSP reduces it by 0.9 points, confirming the value of our multi-task design. Training time was 14 days on 64 NVIDIA A100 GPUs. Our model uses 340 million parameters, comparable to BERT-Large.",
+    "discussion": "The results confirm that multi-task pre-training provides complementary supervision. The SBO objective appears most valuable for tasks requiring span-level reasoning such as SQuAD. The curriculum scheduler reduces training instability during the early stages where task gradients conflict. One limitation of our approach is the increased computational cost compared to single-objective pre-training. Future work will explore parameter-efficient adaptation and distillation to smaller model sizes.",
+    "references": "[1] Devlin et al. (2018). BERT: Pre-training of Deep Bidirectional Transformers. NAACL.\n[2] Liu et al. (2019). RoBERTa: A Robustly Optimized BERT Pretraining Approach. arXiv.\n[3] He et al. (2020). DeBERTa: Decoding-enhanced BERT with Disentangled Attention. ICLR.\n[4] Joshi et al. (2020). SpanBERT. TACL.\n[5] Loshchilov & Hutter (2019). Decoupled Weight Decay Regularization. ICLR."
+  },
+  "tables": {
+    "Table 1": {
+      "caption": "Table 1: GLUE benchmark results. Best results per task in bold.",
+      "data": {
+        "MNLI": "90.2",
+        "QQP": "92.5",
+        "QNLI": "95.3",
+        "SST-2": "97.1",
+        "CoLA": "67.4",
+        "STS-B": "91.8",
+        "MRPC": "89.6",
+        "RTE": "87.0",
+        "Average": "91.7"
+      }
+    },
+    "Table 2": {
+      "caption": "Table 2: Ablation study. Each row removes one pre-training objective.",
+      "data": {
+        "Full model": "91.7",
+        "w/o SBO": "89.9",
+        "w/o NSP": "90.8",
+        "w/o MLM": "73.2"
+      }
+    }
+  },
+  "figures": {
+    "Figure 1": {
+      "caption": "Figure 1: Training loss curves for LanguageNet.",
+      "type": "line_chart"
+    }
+  },
+  "ground_truth": {
+    "task1_violations": [
+      {
+        "rule": "citation_format_ieee",
+        "note": "Uses (Author, Year) style; IEEE requires [N]"
+      },
+      {
+        "rule": "abstract_max_words",
+        "actual": 105,
+        "limit": 100,
+        "note": "Abstract slightly over IEEE 100-word limit"
+      }
+    ],
+    "task2_inconsistencies": [
+      {
+        "id": "IC_001",
+        "type": "number_mismatch",
+        "location_a": "abstract",
+        "claim_a": "reaching an overall score of 94.3",
+        "location_b": "results",
+        "claim_b": "LanguageNet achieves an average score of 91.7",
+        "injected": false,
+        "note": "Abstract claims 94.3 but results section and Table 1 show 91.7"
+      },
+      {
+        "id": "IC_002",
+        "type": "contribution_count",
+        "location_a": "introduction",
+        "claim_a": "three complementary objectives",
+        "location_b": "methods",
+        "claim_b": "three objectives simultaneously",
+        "injected": false,
+        "note": "Consistent count — this is NOT an inconsistency (control entry)"
+      }
+    ],
+    "task3_discrepancies": [
+      {
+        "id": "D_001",
+        "type": "table_text_mismatch",
+        "text_location": "abstract",
+        "text_claim": "reaching an overall score of 94.3",
+        "table_id": "Table 1",
+        "table_value": "91.7",
+        "injected": true,
+        "note": "Abstract inflated by 2.6 points vs Table 1 Average"
+      }
+    ],
+    "task4_citations": [
+      {
+        "id": "ref_1",
+        "citation_number": "1",
+        "raw": "Devlin et al. (2018). BERT: Pre-training of Deep Bidirectional Transformers. NAACL.",
+        "status": "valid",
+        "authors": [
+          "Devlin",
+          "Chang",
+          "Lee",
+          "Toutanova"
+        ],
+        "year": 2018,
+        "injected": false,
+        "note": "Real paper — agents should mark as valid"
+      },
+      {
+        "id": "ref_2",
+        "citation_number": "2",
+        "raw": "Liu et al. (2019). RoBERTa: A Robustly Optimized BERT Pretraining Approach. arXiv.",
+        "status": "valid",
+        "authors": [
+          "Liu",
+          "Ott",
+          "Goyal"
+        ],
+        "year": 2019,
+        "injected": false,
+        "note": "Real paper"
+      },
+      {
+        "id": "ref_3",
+        "citation_number": "3",
+        "raw": "Zhang et al. (2023). SuperBERT: Achieving 99.8% on All NLP Tasks. ICML 2023.",
+        "status": "ghost",
+        "authors": [
+          "Zhang"
+        ],
+        "year": 2023,
+        "injected": true,
+        "note": "Ghost citation — fabricated paper, implausible claim"
+      },
+      {
+        "id": "ref_4",
+        "citation_number": "4",
+        "raw": "Joshi et al. (2020). SpanBERT. TACL.",
+        "status": "valid",
+        "authors": [
+          "Joshi",
+          "Chen",
+          "Liu"
+        ],
+        "year": 2020,
+        "injected": false
+      },
+      {
+        "id": "ref_5",
+        "citation_number": "5",
+        "raw": "Loshchilov & Hutter (2019). Decoupled Weight Decay Regularization. ICLR.",
+        "status": "valid",
+        "authors": [
+          "Loshchilov",
+          "Hutter"
+        ],
+        "year": 2019,
+        "injected": false
+      }
+    ]
+  }
+}

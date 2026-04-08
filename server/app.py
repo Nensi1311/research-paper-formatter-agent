@@ -1,37 +1,47 @@
 """
-FastAPI server exposing the PaperFormatterEnv via HTTP.
-Endpoints: POST /reset, POST /step, GET /state, GET /health, GET /tasks
-"""
+server/app.py — FastAPI application for ScholarEnv.
 
+Exposes the five endpoints required by OpenEnv / hackathon validation:
+  POST /reset        — start a new episode
+  POST /step         — submit an action
+  GET  /state        — inspect current episode state
+  GET  /health       — liveness probe (returns 200)
+  GET  /action_space — action schema documentation
+  GET  /tasks        — list all available tasks
+
+All request/response bodies are JSON.
+CORS is enabled for HuggingFace Spaces embedding.
+
+Usage:
+  uvicorn server.app:app --host 0.0.0.0 --port 7860
+"""
 from __future__ import annotations
 
 import os
 import sys
-from typing import Any, Dict, Optional
+from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
-import uvicorn
-from pydantic import BaseModel
+from fastapi.responses import JSONResponse
 
-# Ensure root directory is in sys.path for relative imports when run as a script
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Ensure root is on path when running from server/
+_ROOT = Path(__file__).resolve().parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
 
-from models import PaperAction, ActionType
-from environment import PaperFormatterEnv
-from tasks import list_tasks, get_task
+from server.environment import ScholarEnvironment, TASK_CONFIG
 
-# ──────────────────────────────────────────────
-# App setup
-# ──────────────────────────────────────────────
+# ── App setup ─────────────────────────────────────────────────────────────────
 
 app = FastAPI(
-    title="Research Paper Formatter — OpenEnv",
-    description="OpenEnv-compliant environment for formatting academic papers across conference styles.",
-    version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    title="ScholarEnv",
+    description=(
+        "OpenEnv environment for scholarly integrity verification. "
+        "Three tasks: formatting compliance, internal consistency, "
+        "claim-evidence audit."
+    ),
+    version="0.3.0",
 )
 
 app.add_middleware(
@@ -41,240 +51,170 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Single global environment instance per server process
-# (For multi-agent use, extend with session IDs)
-_env: Optional[PaperFormatterEnv] = None
+# Single environment instance shared across requests
+# (stateful — one active episode at a time, sufficient for hackathon eval)
+_ENV: ScholarEnvironment | None = None
 
 
-def get_env() -> PaperFormatterEnv:
-    global _env
-    if _env is None:
-        _env = PaperFormatterEnv(task_id="task_easy")
-    return _env
+def get_env() -> ScholarEnvironment:
+    global _ENV
+    if _ENV is None:
+        data_dir = os.environ.get("DATA_DIR", "data")
+        _ENV = ScholarEnvironment(data_dir=data_dir)
+    return _ENV
 
 
-# ──────────────────────────────────────────────
-# Request / Response models
-# ──────────────────────────────────────────────
-
-class ResetRequest(BaseModel):
-    task_id: Optional[str] = "task_easy"
-
-
-class StepRequest(BaseModel):
-    action_type: str
-    parameters: Dict[str, Any] = {}
-
-
-# ──────────────────────────────────────────────
-# Routes
-# ──────────────────────────────────────────────
-
-@app.get("/", response_class=HTMLResponse)
-async def root():
-    """Landing page with links to docs and environment info."""
-    return """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Research Paper Formatter — OpenEnv</title>
-        <style>
-            body { font-family: 'Georgia', serif; max-width: 860px; margin: 60px auto; 
-                   background: #0f0e17; color: #fffffe; padding: 0 24px; }
-            h1 { color: #ff8906; font-size: 2.2rem; margin-bottom: 0.3em; }
-            h2 { color: #f25f4c; }
-            a { color: #e53170; }
-            code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; }
-            .task { background: #1a1a2e; border-left: 4px solid #ff8906; 
-                    padding: 12px 16px; margin: 12px 0; border-radius: 0 8px 8px 0; }
-            .badge { display:inline-block; padding:2px 8px; border-radius:12px; 
-                     font-size:0.8rem; font-weight:bold; }
-            .easy { background:#2ecc71; color:#000; }
-            .medium { background:#f39c12; color:#000; }
-            .hard { background:#e74c3c; color:#fff; }
-        </style>
-    </head>
-    <body>
-        <h1>📄 Research Paper Formatter</h1>
-        <p>An <strong>OpenEnv</strong> environment where AI agents learn to reformat academic papers 
-        between conference styles (IEEE, ACM, NeurIPS, ICML, AAAI, arXiv).</p>
-
-        <h2>Quick Links</h2>
-        <ul>
-            <li><a href="/docs">Interactive API Docs (Swagger UI)</a></li>
-            <li><a href="/health">Health Check</a></li>
-            <li><a href="/tasks">List Tasks</a></li>
-        </ul>
-
-        <h2>Available Tasks</h2>
-        <div class="task">
-            <strong>task_easy</strong> <span class="badge easy">EASY</span><br>
-            NeurIPS → IEEE: Fix abstract length, column layout, citation style (4 issues)
-        </div>
-        <div class="task">
-            <strong>task_medium</strong> <span class="badge medium">MEDIUM</span><br>
-            ACM → NeurIPS: Fix author format, section names, references, layout (6 issues)
-        </div>
-        <div class="task">
-            <strong>task_hard</strong> <span class="badge hard">HARD</span><br>
-            IEEE → ICML: Full reformat — title case, sections, authors, citations (7+ issues)
-        </div>
-
-        <h2>API Usage</h2>
-        <pre><code>POST /reset     {"task_id": "task_easy"}
-POST /step      {"action_type": "set_column_layout", "parameters": {"columns": 2}}
-GET  /state
-GET  /health</code></pre>
-    </body>
-    </html>
-    """
-
+# ── Health ────────────────────────────────────────────────────────────────────
 
 @app.get("/health")
-async def health():
-    return {"status": "ok", "env": PaperFormatterEnv.ENV_ID, "version": PaperFormatterEnv.VERSION}
-
-
-@app.get("/tasks")
-async def list_all_tasks():
-    """List available tasks with metadata."""
-    tasks = []
-    for tid in list_tasks():
-        t = get_task(tid)
-        tasks.append({
-            "task_id": t.task_id,
-            "name": t.name,
-            "difficulty": t.difficulty,
-            "description": t.description,
-            "source_format": t.source_format.value,
-            "target_format": t.target_format.value,
-            "max_steps": t.max_steps,
-            "issues_to_fix": t.issues_to_fix,
-            "success_threshold": t.success_threshold,
-        })
-    return {"tasks": tasks}
-
-
-@app.post("/reset")
-async def reset(request: ResetRequest = ResetRequest()):
-    """Reset environment and return initial observation."""
-    global _env
-    task_id = request.task_id or "task_easy"
-    try:
-        _env = PaperFormatterEnv(task_id=task_id)
-        obs = _env.reset()
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return obs.model_dump()
-
-
-@app.post("/step")
-async def step(request: StepRequest):
-    """Apply an action and return observation, reward, done, info."""
+async def health() -> dict:
+    """Liveness probe — must return 200 for hackathon validation."""
     env = get_env()
-    try:
-        action_type = ActionType(request.action_type)
-    except ValueError:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid action_type '{request.action_type}'. "
-                   f"Valid: {[a.value for a in ActionType]}"
-        )
-
-    action = PaperAction(action_type=action_type, parameters=request.parameters)
-    try:
-        result = env.step(action)
-    except RuntimeError as e:
-        raise HTTPException(status_code=409, detail=str(e))
-
-    return result.model_dump()
-
-
-@app.get("/state")
-async def get_state():
-    """Return full internal episode state."""
-    env = get_env()
-    try:
-        s = env.state()
-    except RuntimeError as e:
-        raise HTTPException(status_code=409, detail=str(e))
-    return s.model_dump()
-
-
-@app.get("/action_space")
-async def action_space():
-    """Describe all available actions and their parameters."""
     return {
-        "actions": [
-            {
-                "action_type": "set_format",
-                "description": "Declare the target conference format",
-                "parameters": {"format": "string — one of IEEE|ACM|NeurIPS|ICML|AAAI|arXiv|Springer|Elsevier"},
-            },
-            {
-                "action_type": "rename_section",
-                "description": "Rename a section by its current name",
-                "parameters": {"old_name": "string", "new_name": "string"},
-            },
-            {
-                "action_type": "reorder_sections",
-                "description": "Reorder sections by providing a new ordered list",
-                "parameters": {"order": "list[string] — ordered section names"},
-            },
-            {
-                "action_type": "format_references",
-                "description": "Change reference list citation style",
-                "parameters": {"style": "string — IEEE|ACM|APA|APA|AAAI"},
-            },
-            {
-                "action_type": "set_title_case",
-                "description": "Set title casing style",
-                "parameters": {"style": "string — title_case|sentence_case|upper|lower"},
-            },
-            {
-                "action_type": "set_abstract_word_limit",
-                "description": "Trim abstract to specified word count",
-                "parameters": {"limit": "int — maximum words"},
-            },
-            {
-                "action_type": "remove_section",
-                "description": "Remove a section by name",
-                "parameters": {"name": "string"},
-            },
-            {
-                "action_type": "add_section",
-                "description": "Add a new section",
-                "parameters": {"name": "string", "section_type": "string", "position": "int (optional)"},
-            },
-            {
-                "action_type": "format_author_list",
-                "description": "Change author name format",
-                "parameters": {"style": "string — 'First Last' or 'F. Last'"},
-            },
-            {
-                "action_type": "set_column_layout",
-                "description": "Set 1 or 2 column layout",
-                "parameters": {"columns": "int — 1 or 2"},
-            },
-            {
-                "action_type": "format_citations",
-                "description": "Switch in-text citation style",
-                "parameters": {"style": "string — 'numeric' or 'author_year'"},
-            },
-            {
-                "action_type": "submit",
-                "description": "Submit the paper — ends the episode",
-                "parameters": {},
-            },
-        ]
+        "status": "ok",
+        "version": "0.3.0",
+        "corpus_size": len(env.corpus),
+        "tasks": list(TASK_CONFIG.keys()),
     }
 
 
-def main():
-    """Main entry point for the server script."""
-    port = int(os.environ.get("PORT", 7860))
-    uvicorn.run("server.app:app", host="0.0.0.0", port=port, reload=False)
+# ── Reset ─────────────────────────────────────────────────────────────────────
+
+@app.post("/reset")
+async def reset(request: Request) -> JSONResponse:
+    """
+    Start a new episode.
+
+    Body (JSON):
+      { "task_id": "formatting_compliance" }   ← default if omitted
+
+    Returns:
+      { "observation": {...}, "info": {...} }
+    """
+    body    = await request.json() if request.headers.get("content-type") else {}
+    task_id = body.get("task_id", "formatting_compliance")
+    result  = get_env().reset(task_id=task_id)
+    status  = 400 if "error" in result else 200
+    return JSONResponse(content=result, status_code=status)
 
 
-if __name__ == "__main__":
-    main()
+# ── Step ──────────────────────────────────────────────────────────────────────
+
+@app.post("/step")
+async def step(request: Request) -> JSONResponse:
+    """
+    Submit one action.
+
+    Body (JSON) — Task 1 example:
+      {
+        "task": "formatting_compliance",
+        "formatted_text": "..."
+      }
+
+    Body (JSON) — Task 2/3 navigation example:
+      {
+        "task": "internal_consistency",
+        "action_type": "query_section",
+        "section_name": "results"
+      }
+
+    Body (JSON) — Task 2/3 submit example:
+      {
+        "task": "claim_evidence_audit",
+        "action_type": "submit_findings",
+        "findings": [
+          {
+            "type": "table_text_mismatch",
+            "location": "results",
+            "claim": "Table 2 shows 87% accuracy",
+            "contradicts": "Table 2 value is 79%",
+            "table_id": "Table 2",
+            "table_value": "79%"
+          }
+        ]
+      }
+
+    Returns:
+      { "observation": {...}, "reward": float, "done": bool, "info": {...} }
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse(
+            content={"error": "Request body must be valid JSON."},
+            status_code=400,
+        )
+    result = get_env().step(body)
+    status = 400 if "error" in result else 200
+    return JSONResponse(content=result, status_code=status)
+
+
+# ── State ─────────────────────────────────────────────────────────────────────
+
+@app.get("/state")
+async def state() -> dict:
+    """Return current episode state (for debugging and logging)."""
+    return get_env().state()
+
+
+# ── Action space ──────────────────────────────────────────────────────────────
+
+@app.get("/action_space")
+async def action_space() -> dict:
+    return {
+        "type": "structured",
+        "discriminator": "task",
+        "variants": {
+            "formatting_compliance": {
+                "fields": {
+                    "task": "Literal['formatting_compliance']",
+                    "formatted_text": "str — complete reformatted manuscript",
+                }
+            },
+            "internal_consistency": {
+                "fields": {
+                    "task":         "Literal['internal_consistency']",
+                    "action_type":  "query_section | submit_findings",
+                    "section_name": "str (for query_section)",
+                    "findings":     "list[dict] (for submit_findings)",
+                }
+            },
+            "claim_evidence_audit": {
+                "fields": {
+                    "task":         "Literal['claim_evidence_audit']",
+                    "action_type":  "query_section | check_table | extract_claims | submit_findings",
+                    "section_name": "str",
+                    "table_id":     "str (e.g. 'Table 1')",
+                    "findings":     "list[dict]",
+                }
+            },
+        },
+        "finding_schema": {
+            "required": ["type", "location", "claim", "contradicts"],
+            "optional_for_task3": ["table_id", "table_value"],
+            "types": [
+                "number_mismatch",
+                "missing_reference",
+                "contribution_count",
+                "table_caption_mismatch",
+                "table_text_mismatch",
+            ],
+        },
+    }
+
+
+# ── Tasks ─────────────────────────────────────────────────────────────────────
+
+@app.get("/tasks")
+async def tasks() -> dict:
+    return {
+        "tasks": [
+            {
+                "id":          tid,
+                "description": cfg["description"][:120] + "...",
+                "max_steps":   cfg["max_steps"],
+                "navigable":   cfg["allows_navigation"],
+            }
+            for tid, cfg in TASK_CONFIG.items()
+        ]
+    }
