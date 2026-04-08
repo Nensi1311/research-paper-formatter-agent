@@ -347,7 +347,9 @@ async def run_task4() -> tuple[float, List[float], int]:
     refs = obs.get("available_references", [])[:4]
     verified: list = []
 
-    for ref_id in refs:
+    for ref in refs:
+        # refs is a list of dicts — extract the string id
+        ref_id = ref.get("id", str(ref)) if isinstance(ref, dict) else str(ref)
         step_num += 1
         nav    = await env_step({"task": "citation_verification",
                                   "action_type": "check_citation",
