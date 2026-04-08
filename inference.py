@@ -38,6 +38,11 @@ except Exception as _e:
     client = OpenAI(base_url=API_BASE_URL, api_key="placeholder")
 
 
+def _si(x: float) -> float:
+    """Clamp to strictly open interval (0, 1) — required by validator."""
+    return round(max(1e-4, min(float(x), 1 - 1e-4)), 4)
+
+
 # ── Mandatory structured logging ──────────────────────────────────────────────
 # Exact format from Sample Inference Script — double-space between fields
 
@@ -140,14 +145,14 @@ async def run_task1() -> tuple[float, List[float], int]:
                                   "formatted_text": text})
         rew    = float(r.get("reward", 0.0))
         done   = bool(r.get("done", False))
-        rewards.append(rew)
+        rewards.append(_si(rew))
         log_step(step=s, action=f"submit_formatted_text len={len(text)}",
                  reward=rew, done=done)
         obs = r["observation"]
         if done:
             return rew, rewards, s
 
-    return max(rewards), rewards, 3
+    return _si(max(rewards)) if rewards else _si(0), rewards, 3
 
 
 # ── Task 2: internal_consistency ──────────────────────────────────────────────
@@ -167,7 +172,7 @@ async def run_task2() -> tuple[float, List[float], int]:
         content  = nav["observation"].get("current_section_content", "")
         nav_rew  = float(nav.get("reward", 0.0))
         nav_done = bool(nav.get("done", False))
-        rewards.append(nav_rew)
+        rewards.append(_si(nav_rew))
         log_step(step=step_num, action=f"query_section:{sec}",
                  reward=nav_rew, done=nav_done)
         if nav_done:
@@ -196,10 +201,10 @@ async def run_task2() -> tuple[float, List[float], int]:
                             "findings": findings})
     rew  = float(sub.get("reward", 0.0))
     done = bool(sub.get("done", True))
-    rewards.append(rew)
+    rewards.append(_si(rew))
     log_step(step=step_num, action=f"submit_findings count={len(findings)}",
              reward=rew, done=done)
-    return rew, rewards, step_num
+    return _si(rew), rewards, step_num
 
 
 # ── Task 3: claim_evidence_audit ──────────────────────────────────────────────
@@ -235,7 +240,7 @@ async def run_task3() -> tuple[float, List[float], int]:
         content  = nav["observation"].get("current_section_content", "")
         nav_rew  = float(nav.get("reward", 0.0))
         nav_done = bool(nav.get("done", False))
-        rewards.append(nav_rew)
+        rewards.append(_si(nav_rew))
         log_step(step=step_num, action=f"query_section:{sec}",
                  reward=nav_rew, done=nav_done)
         if content:
@@ -254,7 +259,7 @@ async def run_task3() -> tuple[float, List[float], int]:
         extracted = ext["observation"].get("extracted_claims", []) or []
         ext_rew   = float(ext.get("reward", 0.0))
         ext_done  = bool(ext.get("done", False))
-        rewards.append(ext_rew)
+        rewards.append(_si(ext_rew))
         log_step(step=step_num, action=f"extract_claims:{res_sec}",
                  reward=ext_rew, done=ext_done)
 
@@ -276,7 +281,7 @@ async def run_task3() -> tuple[float, List[float], int]:
         tdata    = tc["observation"].get("current_table_content")
         tc_rew   = float(tc.get("reward", 0.0))
         tc_done  = bool(tc.get("done", False))
-        rewards.append(tc_rew)
+        rewards.append(_si(tc_rew))
         log_step(step=step_num, action=f"check_table:{tid}",
                  reward=tc_rew, done=tc_done)
         if tdata and "error" not in tdata:
@@ -309,10 +314,10 @@ async def run_task3() -> tuple[float, List[float], int]:
                             "findings": findings})
     rew  = float(sub.get("reward", 0.0))
     done = bool(sub.get("done", True))
-    rewards.append(rew)
+    rewards.append(_si(rew))
     log_step(step=step_num, action=f"submit_findings count={len(findings)}",
              reward=rew, done=done)
-    return rew, rewards, step_num
+    return _si(rew), rewards, step_num
 
 
 # ── Task 4: citation_verification ─────────────────────────────────────────────
@@ -335,7 +340,7 @@ async def run_task4() -> tuple[float, List[float], int]:
         cit_data = nav["observation"].get("citation_data", {})
         nav_rew  = float(nav.get("reward", 0.0))
         nav_done = bool(nav.get("done", False))
-        rewards.append(nav_rew)
+        rewards.append(_si(nav_rew))
         log_step(step=step_num, action=f"check_citation:{ref_id}",
                  reward=nav_rew, done=nav_done)
         if nav_done:
@@ -365,10 +370,10 @@ async def run_task4() -> tuple[float, List[float], int]:
                             "verdicts": verified})
     rew  = float(sub.get("reward", 0.0))
     done = bool(sub.get("done", True))
-    rewards.append(rew)
+    rewards.append(_si(rew))
     log_step(step=step_num, action=f"submit_verdicts count={len(verified)}",
              reward=rew, done=done)
-    return rew, rewards, step_num
+    return _si(rew), rewards, step_num
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -395,7 +400,7 @@ async def main() -> None:
 
         try:
             score, rewards, steps = await runner()
-            score   = min(max(score, 0.0), 1.0)
+            score   = max(1e-4, min(score, 1 - 1e-4))  # strictly (0,1)
             success = score >= SUCCESS_THRESHOLD
         except Exception as exc:
             print(f"[DEBUG] {task_id} error: {exc}", flush=True)
