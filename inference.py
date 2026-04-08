@@ -84,9 +84,12 @@ def llm(prompt: str, max_tokens: int = MAX_TOKENS) -> str:
             return (r.choices[0].message.content or "").strip()
         except Exception as exc:
             print(f"[DEBUG] LLM attempt {attempt+1}: {exc}", flush=True)
+            # On auth error, no point retrying
+            if "401" in str(exc) or "authentication" in str(exc).lower():
+                return ""
             if attempt == 2:
                 return ""
-            time.sleep(2 ** attempt)
+            import time as _t; _t.sleep(1)  # short sleep, don't block long
     return ""
 
 
