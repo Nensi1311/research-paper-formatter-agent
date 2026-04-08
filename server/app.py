@@ -218,3 +218,20 @@ async def tasks() -> dict:
             for tid, cfg in TASK_CONFIG.items()
         ]
     }
+
+
+# ── Entry point (required by openenv spec) ────────────────────────────────────
+
+def main() -> None:
+    """Server entry point — called by [project.scripts] and openenv runner."""
+    import uvicorn
+    uvicorn.run(
+        "server.app:app",
+        host="0.0.0.0",
+        port=7860,
+        workers=1,
+    )
+
+
+if __name__ == "__main__":
+    main()
