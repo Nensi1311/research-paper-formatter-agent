@@ -41,7 +41,7 @@ app = FastAPI(
         "Three tasks: formatting compliance, internal consistency, "
         "claim-evidence audit."
     ),
-    version="0.3.0",
+    version="0.4.0",
 )
 
 app.add_middleware(
@@ -72,7 +72,7 @@ async def health() -> dict:
     env = get_env()
     return {
         "status": "ok",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "corpus_size": len(env.corpus),
         "tasks": list(TASK_CONFIG.keys()),
     }
