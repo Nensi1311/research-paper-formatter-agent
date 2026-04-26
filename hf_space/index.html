@@ -1,0 +1,1500 @@
+﻿                                                                                                                                                                                                                <!--
+Product: Metronic is a toolkit of UI components built with Tailwind CSS for developing scalable web applications quickly and efficiently
+Version: v9.4.10
+Author: Keenthemes
+Contact: support@keenthemes.com
+Website: https://www.keenthemes.com
+Support: https://devs.keenthemes.com
+Follow: https://www.twitter.com/keenthemes
+License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
+-->
+<!DOCTYPE html>
+<html class="h-full" data-kt-theme="true" data-kt-theme-mode="light" dir="ltr" lang="en">
+ <head>
+  <title>
+   ScholarEnv 6.7 — Research Paper Auditor
+  </title>
+  <meta charset="utf-8"/>
+  <meta content="follow, index" name="robots"/>
+  <link href="/" rel="canonical"/>
+  <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport"/>
+  <meta content="" name="description"/>
+  <meta content="@keenthemes" name="twitter:site"/>
+  <meta content="@keenthemes" name="twitter:creator"/>
+  <meta content="summary_large_image" name="twitter:card"/>
+  <meta content="Metronic - Tailwind CSS " name="twitter:title"/>
+  <meta content="" name="twitter:description"/>
+  <meta content="static/assets/media/app/og-image.png" name="twitter:image"/>
+  <meta content="/" property="og:url"/>
+  <meta content="en_US" property="og:locale"/>
+  <meta content="website" property="og:type"/>
+  <meta content="@keenthemes" property="og:site_name"/>
+  <meta content="Metronic - Tailwind CSS " property="og:title"/>
+  <meta content="" property="og:description"/>
+  <meta content="static/assets/media/app/og-image.png" property="og:image"/>
+  <link href="static/assets/media/app/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
+  <link href="static/assets/media/app/favicon-32x32.png" rel="icon" sizes="32x32" type="image/png"/>
+  <link href="static/assets/media/app/favicon-16x16.png" rel="icon" sizes="16x16" type="image/png"/>
+  <link href="static/assets/media/app/favicon.ico" rel="shortcut icon"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="static/assets/vendors/apexcharts/apexcharts.css" rel="stylesheet"/>
+  <link href="static/assets/vendors/keenicons/styles.bundle.css" rel="stylesheet"/>
+  <link href="static/assets/css/styles.css" rel="stylesheet"/>
+ </head>
+ <body class="antialiased flex h-full text-base text-foreground bg-background [--header-height:100px] data-[kt-sticky-header=on]:[--header-height:60px]">
+  <!-- Theme Mode -->
+  <script>
+   const defaultThemeMode = 'light'; // light|dark|system
+			let themeMode;
+
+			if (document.documentElement) {
+				if (localStorage.getItem('kt-theme')) {
+					themeMode = localStorage.getItem('kt-theme');
+				} else if (
+					document.documentElement.hasAttribute('data-kt-theme-mode')
+				) {
+					themeMode =
+						document.documentElement.getAttribute('data-kt-theme-mode');
+				} else {
+					themeMode = defaultThemeMode;
+				}
+
+				if (themeMode === 'system') {
+					themeMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+						? 'dark'
+						: 'light';
+				}
+
+				document.documentElement.classList.add(themeMode);
+			}
+  </script>
+  <!-- End of Theme Mode -->
+  <!-- Page -->
+  <!-- Main -->
+  <div class="flex grow flex-col in-data-[kt-sticky-header=on]:pt-(--header-height)">
+   <!-- Header -->
+   <header class="flex items-center transition-[height] shrink-0 bg-background h-(--header-height)" data-kt-sticky="true" data-kt-sticky-class="transition-[height] fixed z-10 top-0 left-0 right-0 backdrop-blur-md bg-background/70 border-b border-border" data-kt-sticky-name="header" data-kt-sticky-offset="200px" id="header">
+    <!-- Container -->
+    <div class="kt-container-fixed flex justify-between items-center lg:gap-4" id="headerContainer">
+     <!-- Logo -->
+     <div class="flex items-center gap-2 lg:gap-5 2xl:-ml-[60px]">
+      <a class="flex items-center gap-2" href="#overview">
+       <img alt="PyTorch" class="size-9 object-contain" src="static/assets/media/brand-logos/pytorch.png"/>
+      </a>
+      <div class="flex items-center">
+       <h3 class="text-secondary-foreground text-base hidden md:block">
+        OpenEnv Hackathon India
+       </h3>
+       <span class="text-sm text-muted-foreground font-medium px-2.5 hidden md:inline">
+        /
+       </span>
+       <span class="text-mono font-medium text-base">
+        ScholarEnv
+       </span>
+      </div>
+     </div>
+     <!-- End of Logo -->
+     <!-- Topbar -->
+     <div class="flex items-center gap-2.5">
+      <!-- Theme toggle: moon icon in light mode (click → dark), sun icon in dark mode (click → light) -->
+      <label aria-label="Toggle dark mode" class="kt-btn kt-btn-icon kt-btn-ghost cursor-pointer" title="Toggle theme">
+       <input data-kt-theme-switch-state="dark" data-kt-theme-switch-toggle="true" name="theme-toggle" type="checkbox" value="1" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;"/>
+       <span class="dark:hidden">
+        <i class="ki-filled ki-moon text-lg">
+        </i>
+       </span>
+       <span class="hidden dark:block">
+        <i class="ki-filled ki-sun text-lg">
+        </i>
+       </span>
+      </label>
+      <!-- End of Theme toggle -->
+     </div>
+     <!-- End of Topbar -->
+    </div>
+    <!-- End of Container -->
+   </header>
+   <!-- End of Header -->
+   <!-- Toolbar -->
+   <div class="mb-5 lg:mb-10">
+    <!-- Container -->
+    <div class="kt-container-fixed flex items-center justify-between flex-wrap gap-2.5">
+     <div class="flex items-center flex-wrap gap-3 lg:gap-5">
+      <h1 class="font-medium text-lg text-mono">
+       ScholarEnv — OpenEnv for Research Paper's
+      </h1>
+     </div>
+     <div class="flex items-center gap-2.5">
+      <a class="kt-btn kt-btn-outline" href="https://github.com/Nensi1311/research-paper-formatter-agent" target="_blank">
+       <i class="ki-filled ki-code">
+       </i>
+       GitHub Repo
+      </a>
+      <a class="kt-btn kt-btn-primary" href="https://huggingface.co/spaces/flyingmaverick/scholar-env" target="_blank">
+       <i class="ki-filled ki-cloud-download">
+       </i>
+       HuggingFace Space
+      </a>
+     </div>
+    </div>
+    <!-- End of Container -->
+   </div>
+   <!-- End of Toolbar -->
+   <!-- Content -->
+   <main class="grow" id="content" role="content">
+    <!-- Container -->
+    <div class="kt-container-fixed" id="contentContainer">
+    </div>
+    <!-- End of Container -->
+    <!-- Container -->
+    <div class="kt-container-fixed">
+     <div class="grid gap-5 lg:gap-7.5" id="overview">
+      <!-- begin: grid -->
+      <div class="grid lg:grid-cols-3 gap-y-5 lg:gap-7.5 items-stretch">
+       <div class="lg:col-span-2">
+        <div class="grid md:grid-cols-2 gap-5 lg:gap-7.5 h-full items-stretch">
+         <style>
+          .scholar-stats-bg {
+            background-image: url('static/assets/media/images/2600x1600/bg-3.png');
+          }
+          .dark .scholar-stats-bg {
+            background-image: url('static/assets/media/images/2600x1600/bg-3-dark.png');
+          }
+          .scholar-stats-bg:hover {
+            border-color: var(--primary);
+          }
+          .scholar-stats-bg .scholar-cta {
+            transition: transform 0.2s ease, color 0.2s ease;
+          }
+          .scholar-stats-bg:hover .scholar-cta {
+            transform: translate(2px, -2px);
+          }
+         </style>
+         <a class="kt-card px-5 lg:px-7.5 h-full bg-[length:85%] [background-position:9rem_-4rem] rtl:[background-position:-4rem_-4rem] bg-no-repeat scholar-stats-bg transition-colors" href="https://github.com/Nensi1311/research-paper-formatter-agent" target="_blank">
+          <div class="flex flex-col gap-4 pt-6">
+           <i class="ki-filled ki-rocket text-2xl text-muted-foreground">
+           </i>
+           <div class="flex flex-col gap-2.5 mb-2">
+            <h3 class="text-base font-medium leading-none text-mono">
+             T5 Zero-Shot Transfer · +27%
+            </h3>
+            <span class="text-sm text-secondary-foreground leading-5">
+             0.1397 → 0.1771 reward on prompt-injection detection. Zero T5 training examples — pure cross-task generalisation.
+            </span>
+           </div>
+          </div>
+          <div class="mb-4">
+           <span class="kt-link scholar-cta">
+            View on GitHub
+            <i class="ki-filled ki-arrow-up-right text-xs">
+            </i>
+           </span>
+          </div>
+         </a>
+         <a class="kt-card px-5 lg:px-7.5 h-full bg-[length:85%] [background-position:9rem_-4rem] rtl:[background-position:-4rem_-4rem] bg-no-repeat scholar-stats-bg transition-colors" href="https://github.com/Nensi1311/research-paper-formatter-agent" target="_blank">
+          <div class="flex flex-col gap-4 pt-6">
+           <i class="ki-filled ki-verify text-2xl text-muted-foreground">
+           </i>
+           <div class="flex flex-col gap-2.5 mb-2">
+            <h3 class="text-base font-medium leading-none text-mono">
+             Citation Verification (T4) · +33%
+            </h3>
+            <span class="text-sm text-secondary-foreground leading-5">
+             0.3604 → 0.4807 reward across 115 graded completions. Veri-R1 design with live CrossRef + Semantic Scholar lookups.
+            </span>
+           </div>
+          </div>
+          <div class="mb-4">
+           <span class="kt-link scholar-cta">
+            View on GitHub
+            <i class="ki-filled ki-arrow-up-right text-xs">
+            </i>
+           </span>
+          </div>
+         </a>
+         <a class="kt-card px-5 lg:px-7.5 h-full bg-[length:85%] [background-position:9rem_-4rem] rtl:[background-position:-4rem_-4rem] bg-no-repeat scholar-stats-bg transition-colors" href="https://github.com/Nensi1311/research-paper-formatter-agent" target="_blank">
+          <div class="flex flex-col gap-4 pt-6">
+           <i class="ki-filled ki-some-files text-2xl text-muted-foreground">
+           </i>
+           <div class="flex flex-col gap-2.5 mb-2">
+            <h3 class="text-base font-medium leading-none text-mono">
+             Formatting Compliance (T1) · +63%
+            </h3>
+            <span class="text-sm text-secondary-foreground leading-5">
+             0.1709 → 0.2787 reward across 91 completions. 3-stage Progressive Reward Shaping (arXiv:2512.07478).
+            </span>
+           </div>
+          </div>
+          <div class="mb-4">
+           <span class="kt-link scholar-cta">
+            View on GitHub
+            <i class="ki-filled ki-arrow-up-right text-xs">
+            </i>
+           </span>
+          </div>
+         </a>
+         <a class="kt-card px-5 lg:px-7.5 h-full bg-[length:85%] [background-position:9rem_-4rem] rtl:[background-position:-4rem_-4rem] bg-no-repeat scholar-stats-bg transition-colors" href="https://github.com/Nensi1311/research-paper-formatter-agent" target="_blank">
+          <div class="flex flex-col gap-4 pt-6">
+           <i class="ki-filled ki-flash text-2xl text-muted-foreground">
+           </i>
+           <div class="flex flex-col gap-2.5 mb-2">
+            <h3 class="text-base font-medium leading-none text-mono">
+             Smoke Run Peak · 58×
+            </h3>
+            <span class="text-sm text-secondary-foreground leading-5">
+             0.008 frozen baseline → 0.745 peak reward on T3 claim audit, 25 GRPO steps. F-beta(0.5) grader, no annotation.
+            </span>
+           </div>
+          </div>
+          <div class="mb-4">
+           <span class="kt-link scholar-cta">
+            View on GitHub
+            <i class="ki-filled ki-arrow-up-right text-xs">
+            </i>
+           </span>
+          </div>
+         </a>
+        </div>
+       </div>
+       <div class="lg:col-span-1" id="results">
+        <div class="kt-card h-full">
+         <div class="kt-card-header">
+          <h3 class="kt-card-title">
+           Smoke Run · T3 Claim Audit
+          </h3>
+         </div>
+         <div class="kt-card-content flex flex-col gap-2 px-5 lg:px-7.5 pt-5">
+          <span class="text-sm font-normal text-foreground" id="run_chart_subtitle">
+           Peak reward · T3 claim audit · 416 episodes
+          </span>
+          <span class="text-3xl font-semibold text-mono mb-3" id="run_chart_value">
+           0.905
+          </span>
+          <div class="kt-toggle-group flex">
+           <label class="kt-btn">
+            Multi-task
+            <input name="run-mode" type="radio" value="multitask"/>
+           </label>
+           <label class="kt-btn">
+            Smoke
+            <input checked="" name="run-mode" type="radio" value="smoke"/>
+           </label>
+           <label class="kt-btn">
+            Components
+            <input name="run-mode" type="radio" value="components"/>
+           </label>
+          </div>
+         </div>
+         <div class="px-3" id="smoke_run_chart">
+         </div>
+        </div>
+       </div>
+      </div>
+      <!-- end: grid -->
+      <!-- begin: grid -->
+      <div class="grid lg:grid-cols-3 gap-5 lg:gap-7.5 items-stretch" id="architecture">
+       <div class="lg:col-span-2">
+        <div class="kt-card h-full">
+         <div class="kt-card-content p-10">
+          <div class="flex flex-col justify-center gap-4">
+          <div class="flex -space-x-2">
+           <div class="flex">
+            <span class="hover:z-5 relative inline-flex items-center justify-center shrink-0 rounded-full ring-1 size-10 ring-background bg-background overflow-hidden" title="HuggingFace">
+             <img alt="HuggingFace" class="size-9 object-contain" src="static/assets/media/brand-logos/huggingface.png"/>
+            </span>
+           </div>
+           <div class="flex">
+            <span class="hover:z-5 relative inline-flex items-center justify-center shrink-0 rounded-full ring-1 size-10 ring-background bg-background overflow-hidden" title="PyTorch">
+             <img alt="PyTorch" class="size-7 object-contain" src="static/assets/media/brand-logos/pytorch.png"/>
+            </span>
+           </div>
+           <div class="flex">
+            <span class="hover:z-5 relative inline-flex items-center justify-center shrink-0 rounded-full ring-1 size-10 ring-background bg-background overflow-hidden" title="Meta">
+             <img alt="Meta" class="size-7 object-contain" src="static/assets/media/brand-logos/meta.png"/>
+            </span>
+           </div>
+           <div class="flex">
+            <span class="hover:z-5 relative inline-flex items-center justify-center shrink-0 rounded-full ring-1 size-10 ring-background bg-background overflow-hidden" title="Scaler">
+             <img alt="Scaler" class="size-7 object-contain" src="static/assets/media/brand-logos/scaler.png"/>
+            </span>
+           </div>
+          </div>
+           <h2 class="text-xl font-semibold text-mono">
+            ScholarEnv 6.7 — an open RL environment
+            <br/>
+            for the
+            <a class="kt-link" href="https://huggingface.co/spaces/flyingmaverick/scholar-env" target="_blank">
+             HuggingFace Spaces
+            </a>
+            community
+           </h2>
+           <p class="text-sm font-normal text-secondary-foreground leading-5.5">
+            Infinite-data, verifiable-reward RL training for scientific paper auditing.
+            <br/>
+            GRPO trains a Qwen2.5-1.5B with Unsloth LoRA on five tasks: format, consistency,
+            <br/>
+            claim verification, citation checking, and adversarial-injection detection.
+           </p>
+          </div>
+         </div>
+         <div class="kt-card-footer justify-center">
+          <a class="kt-link kt-link-underlined kt-link-dashed" href="https://huggingface.co/spaces/flyingmaverick/scholar-env" target="_blank">
+           Open on HuggingFace
+          </a>
+         </div>
+        </div>
+       </div>
+       <div class="lg:col-span-1" id="rewards">
+        <div class="kt-card h-full">
+         <div class="kt-card-header">
+          <h3 class="kt-card-title">
+           Reward Functions
+          </h3>
+         </div>
+         <div class="kt-card-group flex items-center justify-between py-4 gap-2.5">
+          <div class="flex flex-col justify-center gap-1.5">
+           <span class="leading-none font-medium text-sm text-mono">
+            F-beta Score
+           </span>
+           <span class="text-sm text-secondary-foreground">
+            Precision &amp; recall on flagged claims.
+           </span>
+          </div>
+          <span class="kt-badge kt-badge-outline">
+           × 0.60
+          </span>
+         </div>
+         <div class="kt-card-group flex items-center justify-between py-4 gap-2.5">
+          <div class="flex flex-col justify-center gap-1.5">
+           <span class="leading-none font-medium text-sm text-mono">
+            Specificity
+           </span>
+           <span class="text-sm text-secondary-foreground">
+            Exact table_id and value matching.
+           </span>
+          </div>
+          <span class="kt-badge kt-badge-outline">
+           × 0.15
+          </span>
+         </div>
+         <div class="kt-card-group flex items-center justify-between py-4 gap-2.5">
+          <div class="flex flex-col justify-center gap-1.5">
+           <span class="leading-none font-medium text-sm text-mono">
+            Reasoning Quality
+           </span>
+           <span class="text-sm text-secondary-foreground">
+            Grounded chain-of-thought scoring.
+           </span>
+          </div>
+          <span class="kt-badge kt-badge-outline">
+           × 0.25
+          </span>
+         </div>
+         <div class="kt-card-group flex items-center justify-between py-4 gap-2.5">
+          <div class="flex flex-col justify-center gap-1.5">
+           <span class="leading-none font-medium text-sm text-mono">
+            Sum of weights
+           </span>
+           <span class="text-sm text-secondary-foreground">
+            Pre-weighted total reward in [0, 1].
+           </span>
+          </div>
+          <span class="kt-badge kt-badge-primary">
+           1.00
+          </span>
+         </div>
+        </div>
+       </div>
+      </div>
+      <!-- end: grid -->
+      <!-- begin: grid -->
+      <div class="grid lg:grid-cols-3 gap-5 lg:gap-7.5 items-stretch">
+       <div class="lg:col-span-2" id="algorithms">
+        <div class="kt-card">
+         <div class="kt-card-header">
+          <h3 class="kt-card-title">
+           Algorithms &amp; Techniques
+          </h3>
+         </div>
+         <style>
+          .scholar-row {
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+          }
+          .scholar-row:hover {
+            border-color: var(--primary);
+          }
+          .scholar-row .scholar-cta {
+            transition: transform 0.2s ease, color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+          }
+          .scholar-row:hover .scholar-cta {
+            transform: translate(2px, -2px);
+            border-color: var(--primary);
+            color: var(--primary);
+          }
+         </style>
+         <div class="kt-card-content grid gap-5 lg:gap-7.5 lg:py-7.5 py-5">
+          <div class="grid gap-5">
+          <div class="scholar-row flex items-center justify-between flex-wrap border border-border dark:bg-secondary-transparent rounded-xl gap-2 p-3.5">
+           <div class="flex items-center flex-wrap gap-3.5">
+            <span class="inline-flex items-center justify-center size-9 shrink-0 rounded-md overflow-hidden bg-background border border-border">
+             <img alt="HuggingFace" class="size-7 object-contain" src="static/assets/media/brand-logos/huggingface.png"/>
+            </span>
+            <div class="flex flex-col">
+             <div class="flex items-center gap-1.5">
+              <a class="text-sm font-medium text-mono hover:text-primary" href="https://huggingface.co/docs/trl/main/en/grpo_trainer" target="_blank">
+               GRPO
+              </a>
+               <span class="text-sm text-muted-foreground">
+                trl 0.22.2 · DeepSeek-R1
+               </span>
+              </div>
+              <span class="text-sm font-medium text-secondary-foreground">
+               Group Relative Policy Optimisation — removes the critic from PPO using sampled-group advantage.
+              </span>
+             </div>
+            </div>
+            <a class="kt-btn kt-btn-icon kt-btn-outline scholar-cta" href="https://huggingface.co/docs/trl/main/en/grpo_trainer" target="_blank" title="Open source">
+             <i class="ki-filled ki-arrow-up-right">
+             </i>
+            </a>
+           </div>
+          <div class="scholar-row flex items-center justify-between flex-wrap border border-border dark:bg-secondary-transparent rounded-xl gap-2 p-3.5">
+           <div class="flex items-center flex-wrap gap-3.5">
+            <span class="inline-flex items-center justify-center size-9 shrink-0 rounded-md overflow-hidden bg-background border border-border">
+             <img alt="PyTorch" class="size-7 object-contain" src="static/assets/media/brand-logos/pytorch.png"/>
+            </span>
+            <div class="flex flex-col">
+             <div class="flex items-center gap-1.5">
+              <a class="text-sm font-medium text-mono hover:text-primary" href="https://github.com/unslothai/unsloth" target="_blank">
+               LoRA + Unsloth
+              </a>
+               <span class="text-sm text-muted-foreground">
+                PyTorch · 60% less VRAM
+               </span>
+              </div>
+              <span class="text-sm font-medium text-secondary-foreground">
+               Low-rank adaptation with Unsloth-fused kernels and Flash Attention 2 on PyTorch.
+              </span>
+             </div>
+            </div>
+            <a class="kt-btn kt-btn-icon kt-btn-outline scholar-cta" href="https://github.com/unslothai/unsloth" target="_blank" title="Open source">
+             <i class="ki-filled ki-arrow-up-right">
+             </i>
+            </a>
+           </div>
+          <div class="scholar-row flex items-center justify-between flex-wrap border border-border dark:bg-secondary-transparent rounded-xl gap-2 p-3.5">
+           <div class="flex items-center flex-wrap gap-3.5">
+            <span class="inline-flex items-center justify-center size-9 shrink-0 rounded-md overflow-hidden bg-background border border-border">
+             <img alt="Scaler" class="size-7 object-contain" src="static/assets/media/brand-logos/scaler.png"/>
+            </span>
+            <div class="flex flex-col">
+             <div class="flex items-center gap-1.5">
+              <a class="text-sm font-medium text-mono hover:text-primary" href="https://arxiv.org/abs/2402.03300" target="_blank">
+               RLVR
+              </a>
+               <span class="text-sm text-muted-foreground">
+                Scaler School of Tech
+               </span>
+              </div>
+              <span class="text-sm font-medium text-secondary-foreground">
+               Programmatic ground-truth rewards — no learned reward model required.
+              </span>
+             </div>
+            </div>
+            <a class="kt-btn kt-btn-icon kt-btn-outline scholar-cta" href="https://arxiv.org/abs/2402.03300" target="_blank" title="Read paper">
+             <i class="ki-filled ki-arrow-up-right">
+             </i>
+            </a>
+           </div>
+          <div class="scholar-row flex items-center justify-between flex-wrap border border-border dark:bg-secondary-transparent rounded-xl gap-2 p-3.5">
+           <div class="flex items-center flex-wrap gap-3.5">
+            <span class="inline-flex items-center justify-center size-9 shrink-0 rounded-md overflow-hidden bg-background border border-border">
+             <img alt="Meta" class="size-7 object-contain" src="static/assets/media/brand-logos/meta.png"/>
+            </span>
+            <div class="flex flex-col">
+             <div class="flex items-center gap-1.5">
+              <a class="text-sm font-medium text-mono hover:text-primary" href="https://arxiv.org/abs/2201.11903" target="_blank">
+               Chain-of-Thought
+              </a>
+               <span class="text-sm text-muted-foreground">
+                Meta · Grounded reasoning
+               </span>
+              </div>
+              <span class="text-sm font-medium text-secondary-foreground">
+               Reasoning-trace reward (×0.25) for logical coherence and factual grounding.
+              </span>
+             </div>
+            </div>
+            <a class="kt-btn kt-btn-icon kt-btn-outline scholar-cta" href="https://arxiv.org/abs/2201.11903" target="_blank" title="Read paper">
+             <i class="ki-filled ki-arrow-up-right">
+             </i>
+            </a>
+           </div>
+          <div class="scholar-row flex items-center justify-between flex-wrap border border-border dark:bg-secondary-transparent rounded-xl gap-2 p-3.5">
+           <div class="flex items-center flex-wrap gap-3.5">
+            <span class="inline-flex items-center justify-center size-9 shrink-0 rounded-md overflow-hidden bg-background border border-border">
+             <img alt="Meta" class="size-7 object-contain" src="static/assets/media/brand-logos/meta.png"/>
+            </span>
+            <div class="flex flex-col">
+             <div class="flex items-center gap-1.5">
+              <a class="text-sm font-medium text-mono hover:text-primary" href="https://github.com/meta-pytorch/openenv" target="_blank">
+               OpenEnv
+              </a>
+               <span class="text-sm text-muted-foreground">
+                Meta × PyTorch protocol
+               </span>
+              </div>
+              <span class="text-sm font-medium text-secondary-foreground">
+               Standard for verifiable, infinite-diverse RL environments — five paper domains.
+              </span>
+             </div>
+            </div>
+            <a class="kt-btn kt-btn-icon kt-btn-outline scholar-cta" href="https://github.com/meta-pytorch/openenv" target="_blank" title="Open source">
+             <i class="ki-filled ki-arrow-up-right">
+             </i>
+            </a>
+           </div>
+          <div class="scholar-row flex items-center justify-between flex-wrap border border-border dark:bg-secondary-transparent rounded-xl gap-2 p-3.5">
+           <div class="flex items-center flex-wrap gap-3.5">
+            <span class="inline-flex items-center justify-center size-9 shrink-0 rounded-md overflow-hidden bg-background border border-border">
+             <img alt="HuggingFace" class="size-7 object-contain" src="static/assets/media/brand-logos/huggingface.png"/>
+            </span>
+            <div class="flex flex-col">
+             <div class="flex items-center gap-1.5">
+              <a class="text-sm font-medium text-mono hover:text-primary" href="https://www.firecrawl.dev" target="_blank">
+               Firecrawl + arXiv
+              </a>
+               <span class="text-sm text-muted-foreground">
+                Real-paper evaluation
+               </span>
+              </div>
+              <span class="text-sm font-medium text-secondary-foreground">
+               OOD validation — trained model audits real arXiv papers fetched via Firecrawl.
+              </span>
+             </div>
+            </div>
+            <a class="kt-btn kt-btn-icon kt-btn-outline scholar-cta" href="https://www.firecrawl.dev" target="_blank" title="Open source">
+             <i class="ki-filled ki-arrow-up-right">
+             </i>
+            </a>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+       <div class="lg:col-span-1" id="tasks">
+        <div class="kt-card h-full">
+         <div class="kt-card-header">
+          <h3 class="kt-card-title">
+           Tasks T1 — T5
+          </h3>
+         </div>
+         <div class="kt-card-content flex flex-col gap-5">
+          <div class="text-sm text-foreground">
+           Five verifiable audit tasks. Four are trained jointly via GRPO; the fifth is held out for zero-shot generalisation evaluation.
+          </div>
+          <div class="flex flex-col gap-2">
+           <div class="scholar-row flex items-center justify-between gap-2.5 border border-transparent rounded-md p-2 -mx-2">
+            <div class="flex items-center gap-2.5">
+             <span class="inline-flex items-center justify-center shrink-0 rounded-full size-9 text-white text-sm font-semibold bg-violet-500">
+              T1
+             </span>
+             <div class="flex flex-col gap-0.5">
+              <a class="flex items-center gap-1.5 leading-none font-medium text-sm text-mono hover:text-primary" href="https://github.com/Nensi1311/research-paper-formatter-agent/blob/main/tasks/t1_format.py" target="_blank">
+               Format Compliance
+              </a>
+              <span class="text-sm text-secondary-foreground">
+               0.1709 → 0.2787 · +63% · n=91
+              </span>
+             </div>
+            </div>
+            <a class="kt-btn kt-btn-icon kt-btn-outline scholar-cta" href="https://github.com/Nensi1311/research-paper-formatter-agent/blob/main/tasks/t1_format.py" target="_blank" title="View on GitHub">
+             <i class="ki-filled ki-arrow-up-right">
+             </i>
+            </a>
+           </div>
+           <div class="scholar-row flex items-center justify-between gap-2.5 border border-transparent rounded-md p-2 -mx-2">
+            <div class="flex items-center gap-2.5">
+             <span class="inline-flex items-center justify-center shrink-0 rounded-full size-9 text-white text-sm font-semibold bg-green-500">
+              T2
+             </span>
+             <div class="flex flex-col gap-0.5">
+              <a class="flex items-center gap-1.5 leading-none font-medium text-sm text-mono hover:text-primary" href="https://github.com/Nensi1311/research-paper-formatter-agent/blob/main/tasks/t2_consistency.py" target="_blank">
+               Internal Consistency
+              </a>
+              <span class="text-sm text-secondary-foreground">
+               0.0187 → 0.0176 · v8 schema fix
+              </span>
+             </div>
+            </div>
+            <a class="kt-btn kt-btn-icon kt-btn-outline scholar-cta" href="https://github.com/Nensi1311/research-paper-formatter-agent/blob/main/tasks/t2_consistency.py" target="_blank" title="View on GitHub">
+             <i class="ki-filled ki-arrow-up-right">
+             </i>
+            </a>
+           </div>
+           <div class="scholar-row flex items-center justify-between gap-2.5 border border-transparent rounded-md p-2 -mx-2">
+            <div class="flex items-center gap-2.5">
+             <span class="inline-flex items-center justify-center shrink-0 rounded-full size-9 text-white text-sm font-semibold bg-yellow-500">
+              T3
+             </span>
+             <div class="flex flex-col gap-0.5">
+              <a class="flex items-center gap-1.5 leading-none font-medium text-sm text-mono hover:text-primary" href="https://github.com/Nensi1311/research-paper-formatter-agent/blob/main/tasks/t3_claim.py" target="_blank">
+               Claim Auditing
+              </a>
+              <span class="text-sm text-secondary-foreground">
+               Smoke peak 0.745 · 58× over 0.008 baseline
+              </span>
+             </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+             <span class="kt-badge kt-badge-warning kt-badge-outline">
+              Primary
+             </span>
+             <a class="kt-btn kt-btn-icon kt-btn-outline scholar-cta" href="https://github.com/Nensi1311/research-paper-formatter-agent/blob/main/tasks/t3_claim.py" target="_blank" title="View on GitHub">
+              <i class="ki-filled ki-arrow-up-right">
+              </i>
+             </a>
+            </div>
+           </div>
+           <div class="scholar-row flex items-center justify-between gap-2.5 border border-transparent rounded-md p-2 -mx-2">
+            <div class="flex items-center gap-2.5">
+             <span class="inline-flex items-center justify-center shrink-0 rounded-full size-9 text-mono text-sm font-semibold bg-orange-100">
+              T4
+             </span>
+             <div class="flex flex-col gap-0.5">
+              <a class="flex items-center gap-1.5 leading-none font-medium text-sm text-mono hover:text-primary" href="https://github.com/Nensi1311/research-paper-formatter-agent/blob/main/tasks/t4_citation.py" target="_blank">
+               Citation Verification
+              </a>
+              <span class="text-sm text-secondary-foreground">
+               0.3604 → 0.4807 · +33% · n=115
+              </span>
+             </div>
+            </div>
+            <a class="kt-btn kt-btn-icon kt-btn-outline scholar-cta" href="https://github.com/Nensi1311/research-paper-formatter-agent/blob/main/tasks/t4_citation.py" target="_blank" title="View on GitHub">
+             <i class="ki-filled ki-arrow-up-right">
+             </i>
+            </a>
+           </div>
+           <div class="scholar-row flex items-center justify-between gap-2.5 border border-transparent rounded-md p-2 -mx-2">
+            <div class="flex items-center gap-2.5">
+             <span class="inline-flex items-center justify-center shrink-0 rounded-full size-9 text-white text-sm font-semibold bg-violet-500">
+              T5
+             </span>
+             <div class="flex flex-col gap-0.5">
+              <a class="flex items-center gap-1.5 leading-none font-medium text-sm text-mono hover:text-primary" href="https://github.com/Nensi1311/research-paper-formatter-agent/blob/main/tasks/t5_injection.py" target="_blank">
+               Injection Detection
+              </a>
+              <span class="text-sm text-secondary-foreground">
+               0.1397 → 0.1771 · +27% · zero-shot · n=19
+              </span>
+             </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+             <span class="kt-badge kt-badge-destructive kt-badge-outline">
+              Zero-shot
+             </span>
+             <a class="kt-btn kt-btn-icon kt-btn-outline scholar-cta" href="https://github.com/Nensi1311/research-paper-formatter-agent/blob/main/tasks/t5_injection.py" target="_blank" title="View on GitHub">
+              <i class="ki-filled ki-arrow-up-right">
+              </i>
+             </a>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+      <!-- end: grid -->
+      <!-- begin: grid -->
+      <div class="grid lg:grid-cols-3 gap-5 lg:gap-7.5 items-stretch">
+       <div class="lg:col-span-2" id="papers">
+        <div class="grid">
+         <div class="kt-card kt-card-grid h-full min-w-full">
+          <div class="kt-card-header flex-wrap gap-2">
+           <h3 class="kt-card-title flex items-center gap-2">
+            Key Papers &amp; References
+            <span class="kt-badge kt-badge-sm kt-badge-outline">
+             16 implemented
+            </span>
+           </h3>
+           <div class="flex items-center gap-2.5">
+            <div class="kt-input max-w-48">
+             <i class="ki-filled ki-magnifier">
+             </i>
+             <input placeholder="Search papers" type="text"/>
+            </div>
+            <button class="kt-btn kt-btn-outline kt-btn-sm">
+             <i class="ki-filled ki-filter">
+             </i>
+             Filter
+            </button>
+           </div>
+          </div>
+          <div class="kt-card-table">
+           <div class="kt-scrollable-x-auto">
+            <table class="kt-table kt-table-border table-fixed">
+             <thead>
+              <tr>
+               <th class="w-[60px]">
+                <span class="kt-table-col">
+                 <span class="kt-table-col-label">
+                  #
+                 </span>
+                 <span class="kt-table-col-sort">
+                 </span>
+                </span>
+               </th>
+               <th class="w-[280px]">
+                <span class="kt-table-col">
+                 <span class="kt-table-col-label">
+                  Paper
+                 </span>
+                 <span class="kt-table-col-sort">
+                 </span>
+                </span>
+               </th>
+               <th class="w-[200px]">
+                <span class="kt-table-col">
+                 <span class="kt-table-col-label">
+                  Where implemented
+                 </span>
+                 <span class="kt-table-col-sort">
+                 </span>
+                </span>
+               </th>
+               <th class="w-[120px]">
+                <span class="kt-table-col">
+                 <span class="kt-table-col-label">
+                  Tag
+                 </span>
+                 <span class="kt-table-col-sort">
+                 </span>
+                </span>
+               </th>
+              </tr>
+             </thead>
+          <tbody>
+           <tr>
+            <td class="text-muted-foreground text-xs font-mono">
+             01
+            </td>
+            <td>
+             <span class="font-medium text-xs text-mono block">
+              RLVE — Adaptive Verifiable Environments
+             </span>
+             <span class="text-xs text-muted-foreground">
+              arXiv:2511.07317
+             </span>
+            </td>
+            <td class="text-xs text-secondary-foreground font-mono">
+             server/paper_generator.py
+            </td>
+            <td>
+             <span class="kt-badge kt-badge-sm kt-badge-primary kt-badge-outline">
+              Core env
+             </span>
+            </td>
+           </tr>
+           <tr>
+            <td class="text-muted-foreground text-xs font-mono">
+             02
+            </td>
+            <td>
+             <span class="font-medium text-xs text-mono block">
+              PRS — Progressive Reward Shaping
+             </span>
+             <span class="text-xs text-muted-foreground">
+              arXiv:2512.07478
+             </span>
+            </td>
+            <td class="text-xs text-secondary-foreground font-mono">
+             graders/formatting_grader.py
+            </td>
+            <td>
+             <span class="kt-badge kt-badge-sm kt-badge-info kt-badge-outline">
+              T1 reward
+             </span>
+            </td>
+           </tr>
+           <tr>
+            <td class="text-muted-foreground text-xs font-mono">
+             03
+            </td>
+            <td>
+             <span class="font-medium text-xs text-mono block">
+              DAPO — Structured JSON Training
+             </span>
+             <span class="text-xs text-muted-foreground">
+              arXiv:2503.14476
+             </span>
+            </td>
+            <td class="text-xs text-secondary-foreground font-mono">
+             GRPOConfig(loss_type="dapo")
+            </td>
+            <td>
+             <span class="kt-badge kt-badge-sm kt-badge-warning kt-badge-outline">
+              GRPO loss
+             </span>
+            </td>
+           </tr>
+           <tr>
+            <td class="text-muted-foreground text-xs font-mono">
+             04
+            </td>
+            <td>
+             <span class="font-medium text-xs text-mono block">
+              PBRS — Potential-Based Reward Shaping
+             </span>
+             <span class="text-xs text-muted-foreground">
+              Ng, Harada &amp; Russell, ICML 1999
+             </span>
+            </td>
+            <td class="text-xs text-secondary-foreground font-mono">
+             server/reward_shaper.py
+            </td>
+            <td>
+             <span class="kt-badge kt-badge-sm kt-badge-success kt-badge-outline">
+              Navigation
+             </span>
+            </td>
+           </tr>
+           <tr>
+            <td class="text-muted-foreground text-xs font-mono">
+             05
+            </td>
+            <td>
+             <span class="font-medium text-xs text-mono block">
+              AdaRFT — Adaptive Curriculum
+             </span>
+             <span class="text-xs text-muted-foreground">
+              arXiv:2504.05520
+             </span>
+            </td>
+            <td class="text-xs text-secondary-foreground font-mono">
+             server/curriculum.py
+            </td>
+            <td>
+             <span class="kt-badge kt-badge-sm kt-badge-warning kt-badge-outline">
+              Curriculum
+             </span>
+            </td>
+           </tr>
+           <tr>
+            <td class="text-muted-foreground text-xs font-mono">
+             06
+            </td>
+            <td>
+             <span class="font-medium text-xs text-mono block">
+              Agent-RLVR — Partial Credit
+             </span>
+             <span class="text-xs text-muted-foreground">
+              arXiv:2506.11425
+             </span>
+            </td>
+            <td class="text-xs text-secondary-foreground font-mono">
+             graders/audit_grader.py
+            </td>
+            <td>
+             <span class="kt-badge kt-badge-sm kt-badge-primary kt-badge-outline">
+              T3 grader
+             </span>
+            </td>
+           </tr>
+           <tr>
+            <td class="text-muted-foreground text-xs font-mono">
+             07
+            </td>
+            <td>
+             <span class="font-medium text-xs text-mono block">
+              UniDoc-RL — Hierarchical Actions
+             </span>
+             <span class="text-xs text-muted-foreground">
+              arXiv:2604.14967
+             </span>
+            </td>
+            <td class="text-xs text-secondary-foreground font-mono">
+             models.py (action space)
+            </td>
+            <td>
+             <span class="kt-badge kt-badge-sm kt-badge-secondary kt-badge-outline">
+              v6 new
+             </span>
+            </td>
+           </tr>
+           <tr>
+            <td class="text-muted-foreground text-xs font-mono">
+             08
+            </td>
+            <td>
+             <span class="font-medium text-xs text-mono block">
+              ProRL Agent — Rollout-as-Service
+             </span>
+             <span class="text-xs text-muted-foreground">
+              arXiv:2603.18815
+             </span>
+            </td>
+            <td class="text-xs text-secondary-foreground font-mono">
+             server/app.py (session pool)
+            </td>
+            <td>
+             <span class="kt-badge kt-badge-sm kt-badge-secondary kt-badge-outline">
+              v6 new
+             </span>
+            </td>
+           </tr>
+           <tr>
+            <td class="text-muted-foreground text-xs font-mono">
+             09
+            </td>
+            <td>
+             <span class="font-medium text-xs text-mono block">
+              RAGEN-2 — SNR Filtering
+             </span>
+             <span class="text-xs text-muted-foreground">
+              arXiv:2604.06268
+             </span>
+            </td>
+            <td class="text-xs text-secondary-foreground font-mono">
+             train.py snr_filter_batch()
+            </td>
+            <td>
+             <span class="kt-badge kt-badge-sm kt-badge-secondary kt-badge-outline">
+              v6 new
+             </span>
+            </td>
+           </tr>
+           <tr>
+            <td class="text-muted-foreground text-xs font-mono">
+             10
+            </td>
+            <td>
+             <span class="font-medium text-xs text-mono block">
+              Experience Replay
+             </span>
+             <span class="text-xs text-muted-foreground">
+              arXiv:2604.08706
+             </span>
+            </td>
+            <td class="text-xs text-secondary-foreground font-mono">
+             train.py ExperienceReplayBuffer
+            </td>
+            <td>
+             <span class="kt-badge kt-badge-sm kt-badge-secondary kt-badge-outline">
+              v6 new
+             </span>
+            </td>
+           </tr>
+           <tr>
+            <td class="text-muted-foreground text-xs font-mono">
+             11
+            </td>
+            <td>
+             <span class="font-medium text-xs text-mono block">
+              Abstain-R1 — Calibrated Abstention
+             </span>
+             <span class="text-xs text-muted-foreground">
+              arXiv:2604.17073
+             </span>
+            </td>
+            <td class="text-xs text-secondary-foreground font-mono">
+             train.py CITATION_ABSTAIN_REWARD
+            </td>
+            <td>
+             <span class="kt-badge kt-badge-sm kt-badge-secondary kt-badge-outline">
+              v6 new
+             </span>
+            </td>
+           </tr>
+           <tr>
+            <td class="text-muted-foreground text-xs font-mono">
+             12
+            </td>
+            <td>
+             <span class="font-medium text-xs text-mono block">
+              Veri-R1 — Claim Verification RL
+             </span>
+             <span class="text-xs text-muted-foreground">
+              arXiv:2510.01932
+             </span>
+            </td>
+            <td class="text-xs text-secondary-foreground font-mono">
+             Task 3 design rationale
+            </td>
+            <td>
+             <span class="kt-badge kt-badge-sm kt-badge-info kt-badge-outline">
+              T3 basis
+             </span>
+            </td>
+           </tr>
+           <tr>
+            <td class="text-muted-foreground text-xs font-mono">
+             13
+            </td>
+            <td>
+             <span class="font-medium text-xs text-mono block">
+              CiteAudit — Citation Hallucination
+             </span>
+             <span class="text-xs text-muted-foreground">
+              arXiv:2602.23452
+             </span>
+            </td>
+            <td class="text-xs text-secondary-foreground font-mono">
+             Task 4 design rationale
+            </td>
+            <td>
+             <span class="kt-badge kt-badge-sm kt-badge-info kt-badge-outline">
+              T4 basis
+             </span>
+            </td>
+           </tr>
+           <tr class="bg-primary/5">
+            <td class="text-muted-foreground text-xs font-mono">
+             14
+            </td>
+            <td>
+             <span class="font-semibold text-xs text-primary block">
+              GDPO — Decoupled Reward Normalisation ★
+             </span>
+             <span class="text-xs text-muted-foreground">
+              arXiv:2601.05242
+             </span>
+            </td>
+            <td class="text-xs text-secondary-foreground font-mono">
+             GRPOConfig reward_aggregation
+            </td>
+            <td>
+             <span class="kt-badge kt-badge-sm kt-badge-primary">
+              NEW v6
+             </span>
+            </td>
+           </tr>
+           <tr class="bg-primary/5">
+            <td class="text-muted-foreground text-xs font-mono">
+             15
+            </td>
+            <td>
+             <span class="font-semibold text-xs text-primary block">
+              Dr. GRPO — Remove Std Bias ★
+             </span>
+             <span class="text-xs text-muted-foreground">
+              arXiv:2503.20783
+             </span>
+            </td>
+            <td class="text-xs text-secondary-foreground font-mono">
+             GRPOConfig scale_rewards="batch"
+            </td>
+            <td>
+             <span class="kt-badge kt-badge-sm kt-badge-primary">
+              NEW v6
+             </span>
+            </td>
+           </tr>
+           <tr>
+            <td class="text-muted-foreground text-xs font-mono">
+             16
+            </td>
+            <td>
+             <span class="font-medium text-xs text-mono block">
+              AgentReview — Peer Review Bias
+             </span>
+             <span class="text-xs text-muted-foreground">
+              arXiv:2406.12708
+             </span>
+            </td>
+            <td class="text-xs text-secondary-foreground font-mono">
+             Domain motivation
+            </td>
+            <td>
+             <span class="kt-badge kt-badge-sm kt-badge-secondary kt-badge-outline">
+              Motivation
+             </span>
+            </td>
+           </tr>
+             </tbody>
+            </table>
+           </div>
+           <div class="kt-card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-secondary-foreground text-sm font-medium">
+            <div class="flex items-center gap-2 order-2 md:order-1">
+             <span class="kt-badge kt-badge-sm kt-badge-success kt-badge-outline gap-1.5">
+              <span class="kt-badge-dot bg-green-500">
+              </span>
+              383 graded completions
+             </span>
+             <span class="kt-badge kt-badge-sm kt-badge-outline">
+              5 tasks · 5 domains
+             </span>
+             <span class="kt-badge kt-badge-sm kt-badge-outline">
+              Free T4
+             </span>
+            </div>
+            <div class="flex items-center gap-4 order-1 md:order-2">
+             <a class="kt-link kt-link-underlined kt-link-dashed" href="https://github.com/Nensi1311/research-paper-formatter-agent#references" target="_blank">
+              View full bibliography
+             </a>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+       <div class="lg:col-span-1" id="training">
+        <div class="kt-card h-full">
+         <div class="kt-card-header">
+          <h3 class="kt-card-title">
+           Training Configuration
+          </h3>
+          <span class="kt-badge kt-badge-sm kt-badge-success kt-badge-outline gap-1.5">
+           <span class="kt-badge-dot bg-green-500">
+           </span>
+           Step 200 / 200
+          </span>
+         </div>
+         <div class="kt-card-content flex flex-col gap-2.5 pt-5 pb-2.5">
+          <div class="flex items-center justify-between gap-2">
+           <span class="text-xs font-medium text-secondary-foreground">
+            T3 smoke peak · 25 steps
+           </span>
+           <span class="text-xs font-mono text-mono">
+            0.745 peak
+           </span>
+          </div>
+          <div class="kt-progress h-1.5">
+           <div class="kt-progress-indicator bg-primary" style="width: 90.5%">
+           </div>
+          </div>
+          <div class="flex items-center justify-between gap-2 pt-1">
+           <span class="text-xs text-muted-foreground">
+            OpenEnv compliant · 5 tasks
+           </span>
+           <span class="text-xs text-muted-foreground">
+            383 graded completions
+           </span>
+          </div>
+         </div>
+         <div class="kt-card-group flex items-center justify-between py-4 gap-2.5">
+          <div class="flex flex-col justify-center gap-1.5">
+           <span class="leading-none font-medium text-sm text-mono">
+            Base model
+           </span>
+           <span class="text-sm text-secondary-foreground">
+            Qwen2.5-1.5B-Instruct · 4-bit
+           </span>
+          </div>
+          <a class="kt-btn kt-btn-sm kt-btn-outline" href="https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct" target="_blank">
+           <i class="ki-filled ki-arrow-up-right">
+           </i>
+           Hub
+          </a>
+         </div>
+         <div class="kt-card-group flex items-center justify-between py-4 gap-2.5">
+          <div class="flex flex-col justify-center gap-1.5">
+           <span class="leading-none font-medium text-sm text-mono">
+            PEFT method
+           </span>
+           <span class="text-sm text-secondary-foreground">
+            Unsloth LoRA · r=16 · α=32 · q/k/v/o
+           </span>
+          </div>
+          <a class="kt-btn kt-btn-sm kt-btn-outline" href="https://github.com/unslothai/unsloth" target="_blank">
+           <i class="ki-filled ki-arrow-up-right">
+           </i>
+           GitHub
+          </a>
+         </div>
+         <div class="kt-card-group flex items-center justify-between py-4 gap-2.5">
+          <div class="flex flex-col justify-center gap-1.5">
+           <span class="leading-none font-medium text-sm text-mono">
+            RL algorithm
+           </span>
+           <span class="text-sm text-secondary-foreground">
+            GRPO · DAPO loss · scale_rewards=batch
+           </span>
+          </div>
+          <a class="kt-btn kt-btn-sm kt-btn-outline" href="https://huggingface.co/docs/trl/main/en/grpo_trainer" target="_blank">
+           <i class="ki-filled ki-arrow-up-right">
+           </i>
+           Docs
+          </a>
+         </div>
+         <div class="kt-card-group flex items-center justify-between py-4 gap-2.5">
+          <div class="flex flex-col justify-center gap-1.5">
+           <span class="leading-none font-medium text-sm text-mono">
+            Hyperparameters
+           </span>
+           <span class="text-sm text-secondary-foreground">
+            lr 5e-6 · num_generations 4 · effective bs 4
+           </span>
+          </div>
+          <span class="kt-badge kt-badge-outline">
+           200 steps
+          </span>
+         </div>
+         <div class="kt-card-group flex items-center justify-between py-4 gap-2.5">
+          <div class="flex flex-col justify-center gap-1.5">
+           <span class="leading-none font-medium text-sm text-mono">
+            Dataset
+           </span>
+           <span class="text-sm text-secondary-foreground">
+            200 rows · 4 tasks × 50 papers · T5 held out
+           </span>
+          </div>
+          <span class="kt-badge kt-badge-outline">
+           5 domains
+          </span>
+         </div>
+         <div class="kt-card-group flex items-center justify-between py-4 gap-2.5">
+          <div class="flex flex-col justify-center gap-1.5">
+           <span class="leading-none font-medium text-sm text-mono">
+            Hardware
+           </span>
+           <span class="text-sm text-secondary-foreground">
+            Colab T4 · 14 GB VRAM · free tier
+           </span>
+          </div>
+          <span class="kt-badge kt-badge-outline">
+           Free T4
+          </span>
+         </div>
+         <div class="kt-card-footer flex items-center justify-between gap-2.5">
+          <a class="kt-btn kt-btn-outline kt-btn-sm" href="https://github.com/Nensi1311/research-paper-formatter-agent/blob/main/train.py" target="_blank">
+           <i class="ki-filled ki-some-files">
+           </i>
+           train.py
+          </a>
+          <a class="kt-btn kt-btn-primary kt-btn-sm" href="https://huggingface.co/spaces/flyingmaverick/scholar-env" target="_blank">
+           <i class="ki-filled ki-cloud-download">
+           </i>
+           Push to Hub
+          </a>
+         </div>
+        </div>
+       </div>
+      </div>
+      <!-- end: grid -->
+     </div>
+    </div>
+    <!-- End of Container -->
+   </main>
+   <!-- End of Content -->
+   <!-- Footer -->
+   <footer class="footer">
+    <!-- Container -->
+    <div class="kt-container-fixed">
+     <div class="flex flex-col md:flex-row justify-center md:justify-between items-center gap-3 py-5">
+      <div class="flex order-2 md:order-1 gap-2 font-normal text-sm">
+       <span class="text-muted-foreground">
+        2026 ©
+       </span>
+       <span class="text-secondary-foreground">
+        By the Team Q-Stars
+       </span>
+      </div>
+      <nav class="flex order-1 md:order-2 gap-4 font-normal text-sm text-secondary-foreground">
+       <a class="hover:text-primary" href="https://github.com/Nensi1311/research-paper-formatter-agent" target="_blank">
+        GitHub
+       </a>
+       <a class="hover:text-primary" href="https://huggingface.co/spaces/flyingmaverick/scholar-env" target="_blank">
+        HuggingFace Space
+       </a>
+       <a class="hover:text-primary" href="https://github.com/meta-pytorch/openenv" target="_blank">
+        OpenEnv
+       </a>
+       <a class="hover:text-primary" href="https://arxiv.org" target="_blank">
+        arXiv
+       </a>
+       <a class="hover:text-primary" href="https://github.com/Nensi1311/research-paper-formatter-agent/blob/main/LICENSE" target="_blank">
+        Apache 2.0
+       </a>
+      </nav>
+     </div>
+    </div>
+    <!-- End of Container -->
+   </footer>
+   <!-- End of Footer -->
+  </div>
+  <!-- End of Main -->
+  <!-- End of Page -->
+  <!-- Scripts -->
+  <script src="static/assets/js/core.bundle.js">
+  </script>
+  <script src="static/assets/vendors/ktui/ktui.min.js">
+  </script>
+  <script src="static/assets/vendors/apexcharts/apexcharts.min.js">
+  </script>
+  <script src="static/assets/js/widgets/general.js">
+  </script>
+  <script>
+   (function () {
+   	// Real run data — sampled every 8 episodes from fig2_learning_curve.csv (T3 claim audit smoke run, 416 eps total)
+   	var EPS = [1,9,17,25,33,41,49,57,65,73,81,89,97,105,113,121,129,137,145,153,161,169,177,185,193,201,209,217,225,233,241,249,257,265,273,281,289,297,305,313,321,329,337,345,353,361,369,377,385,393,401,409,416];
+   	var SMOOTH_TOTAL = [0.0076,0.0076,0.0076,0.2396,0.5751,0.7482,0.7334,0.6533,0.6306,0.6386,0.7171,0.7842,0.7636,0.7084,0.7169,0.6216,0.5948,0.6395,0.6702,0.6763,0.6808,0.6191,0.5829,0.6403,0.5954,0.6092,0.6771,0.6746,0.662,0.6687,0.6151,0.5991,0.6539,0.6462,0.6717,0.6366,0.7091,0.6477,0.6349,0.6307,0.548,0.6502,0.7105,0.6555,0.6585,0.6307,0.5963,0.6041,0.6777,0.7029,0.6678,0.5681,0.499];
+   	var IQR_Q1 = [0.0076,0.0076,0.0076,0.0076,0.0526,0.7439,0.6732,0.6732,0.6549,0.6549,0.6754,0.7439,0.7328,0.7328,0.7328,0.7328,0.5879,0.6732,0.6732,0.6602,0.636,0.5061,0.5061,0.5833,0.5671,0.5671,0.6949,0.6879,0.6732,0.6704,0.662,0.5879,0.6084,0.5975,0.6232,0.5896,0.6266,0.6084,0.6549,0.6549,0.0695,0.6256,0.7328,0.6256,0.5671,0.5542,0.062,0.6549,0.6732,0.7439,0.6672,0.6197,0.0563];
+   	var IQR_Q3 = [0.0076,0.0076,0.0076,0.6549,0.8644,0.8644,0.8644,0.7643,0.8644,0.8644,0.8876,0.8644,0.8644,0.8097,0.7971,0.7643,0.7971,0.8644,0.8644,0.8876,0.8876,0.8644,0.8644,0.8644,0.7528,0.8178,0.8644,0.8644,0.8644,0.7679,0.7853,0.7439,0.7915,0.8644,0.8876,0.8876,0.8876,0.8644,0.8644,0.8644,0.7884,0.8876,0.8876,0.8876,0.8876,0.8876,0.8876,0.8644,0.8644,0.8853,0.8644,0.7472,0.7439];
+   	var SMOOTH_FBETA  = [0.0014,0.0014,0.0014,0.2439,0.589,0.7517,0.7188,0.6294,0.6119,0.6318,0.7162,0.792,0.7618,0.6933,0.6992,0.6057,0.5828,0.6228,0.6558,0.6611,0.6659,0.6055,0.5579,0.6122,0.5481,0.5785,0.6602,0.6569,0.6421,0.6416,0.596,0.5846,0.6522,0.6379,0.6568,0.6063,0.6853,0.6213,0.6135,0.6098,0.517,0.6334,0.702,0.6383,0.6425,0.6167,0.5797,0.5813,0.6718,0.7035,0.6603,0.5391,0.4782];
+   	var SMOOTH_SPEC   = [0.0001,0.0001,0.0001,0.2501,0.65,0.9,0.95,0.85,0.8,0.75,0.85,0.95,0.95,0.9,0.9,0.75,0.7,0.8,0.85,0.85,0.85,0.75,0.75,0.85,0.85,0.8,0.85,0.85,0.85,0.9,0.8,0.75,0.75,0.75,0.825,0.825,0.925,0.85,0.8,0.8,0.7,0.8,0.85,0.8,0.8,0.75,0.7,0.75,0.8,0.8,0.8,0.75,0.6];
+   	var SMOOTH_REASON = [0.0271,0.0271,0.0271,0.2232,0.4968,0.6488,0.6385,0.5928,0.5739,0.5881,0.6394,0.6662,0.6561,0.6296,0.6496,0.5827,0.5607,0.5833,0.5969,0.6087,0.6151,0.5733,0.5426,0.5819,0.5561,0.5684,0.6139,0.6119,0.597,0.5949,0.5499,0.5431,0.6004,0.604,0.6156,0.5962,0.6368,0.5898,0.5871,0.5795,0.5311,0.6007,0.647,0.6101,0.6121,0.5926,0.5738,0.5714,0.6186,0.6432,0.6064,0.5285,0.4884];
+
+   	// Real multi-task data — fig1_multitask_bars.csv. T3 excluded (regression on out-of-distribution multi-task eval).
+   	// delta = trained - baseline, green = improved, red = declined.
+   	var MT_LABELS  = ['T1 · Format', 'T2 · Consistency', 'T4 · Citation', 'T5 · Injection'];
+   	var MT_DELTA   = [0.110, -0.001, 0.120, 0.037];
+   	var MT_BASE    = [0.094, 0.020, 0.254, 0.146];
+   	var MT_TRAIN   = [0.204, 0.019, 0.374, 0.183];
+   	var POS_COLOR  = 'var(--color-green-500)';
+   	var NEG_COLOR  = 'var(--color-red-500)';
+   	var MT_LABEL_COLORS = MT_DELTA.map(function (d) { return d >= 0 ? POS_COLOR : NEG_COLOR; });
+
+   	var element = null;
+   	var chart = null;
+
+   	function destroyChart() {
+   		if (chart) { try { chart.destroy(); } catch (e) {} chart = null; }
+   		if (element) element.innerHTML = '';
+   	}
+
+   	function baseAxis() {
+   		return { axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: 'var(--color-secondary-foreground)', fontSize: '11px' } } };
+   	}
+
+   	function baseY() {
+   		return { min: 0, max: 1, tickAmount: 4, labels: { style: { colors: 'var(--color-secondary-foreground)', fontSize: '11px' }, formatter: function (v) { return v.toFixed(2); } } };
+   	}
+
+   	function baseGrid() {
+   		return { borderColor: 'var(--color-border)', strokeDashArray: 4, yaxis: { lines: { show: true } }, xaxis: { lines: { show: false } } };
+   	}
+
+   	function renderSmoke() {
+   		destroyChart();
+   		var options = {
+   			series: [{ name: 'Total reward', data: SMOOTH_TOTAL }],
+   			chart: { height: 250, type: 'area', toolbar: { show: false }, fontFamily: 'Inter, sans-serif', sparkline: { enabled: false } },
+   			colors: ['var(--color-primary)'],
+   			dataLabels: { enabled: false },
+   			legend: { show: false },
+   			stroke: { curve: 'smooth', show: true, width: 2, colors: ['var(--color-primary)'] },
+   			xaxis: Object.assign({ categories: EPS, tickAmount: 8 }, baseAxis()),
+   			yaxis: baseY(),
+   			markers: { size: 0, hover: { size: 5 } },
+   			fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.25, opacityTo: 0, stops: [0, 90, 100] } },
+   			grid: baseGrid(),
+   			tooltip: { y: { formatter: function (v) { return v.toFixed(3); } }, x: { formatter: function (v) { return 'Ep ' + v; } } }
+   		};
+   		chart = new ApexCharts(element, options);
+   		chart.render();
+   	}
+
+   	function renderMultitask() {
+   		destroyChart();
+   		var options = {
+   			series: [{ name: 'Δ reward (trained − baseline)', data: MT_DELTA }],
+   			chart: { height: 250, type: 'bar', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
+   			plotOptions: {
+   				bar: {
+   					horizontal: false,
+   					columnWidth: '50%',
+   					borderRadius: 4,
+   					colors: {
+   						ranges: [
+   							{ from: -1, to: -0.00001, color: NEG_COLOR },
+   							{ from: 0.00001, to: 1,    color: POS_COLOR }
+   						]
+   					}
+   				}
+   			},
+   			stroke: { show: true, width: 2, colors: ['transparent'] },
+   			dataLabels: {
+   				enabled: true,
+   				formatter: function (v) { return (v >= 0 ? '+' : '') + v.toFixed(3); },
+   				offsetY: -18,
+   				style: { fontSize: '11px', fontWeight: 600, colors: ['var(--color-mono)'] }
+   			},
+   			legend: { show: false },
+   			xaxis: Object.assign({ categories: MT_LABELS }, baseAxis(), {
+   				labels: { style: { colors: MT_LABEL_COLORS, fontSize: '11px', fontWeight: 600 } }
+   			}),
+   			yaxis: { min: -0.05, max: 0.2, tickAmount: 5, labels: { style: { colors: 'var(--color-secondary-foreground)', fontSize: '11px' }, formatter: function (v) { return (v > 0 ? '+' : '') + v.toFixed(2); } } },
+   			grid: baseGrid(),
+   			annotations: {
+   				yaxis: [{ y: 0, borderColor: 'var(--color-border)', strokeDashArray: 0, borderWidth: 1 }]
+   			},
+   			tooltip: {
+   				y: {
+   					formatter: function (v, opts) {
+   						var i = opts && typeof opts.dataPointIndex === 'number' ? opts.dataPointIndex : 0;
+   						var sign = v >= 0 ? '+' : '';
+   						return sign + v.toFixed(3) + '  (base ' + MT_BASE[i].toFixed(3) + ' → trained ' + MT_TRAIN[i].toFixed(3) + ')';
+   					}
+   				}
+   			}
+   		};
+   		chart = new ApexCharts(element, options);
+   		chart.render();
+   	}
+
+   	function renderComponents() {
+   		destroyChart();
+   		var fb = EPS.map(function (ep, i) { return { x: ep, y: SMOOTH_FBETA[i] }; });
+   		var sp = EPS.map(function (ep, i) { return { x: ep, y: SMOOTH_SPEC[i] }; });
+   		var rs = EPS.map(function (ep, i) { return { x: ep, y: SMOOTH_REASON[i] }; });
+   		var options = {
+   			series: [
+   				{ name: 'F-beta',      data: fb },
+   				{ name: 'Specificity', data: sp },
+   				{ name: 'Reasoning',   data: rs }
+   			],
+   			chart: { height: 250, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif', animations: { enabled: false } },
+   			colors: ['var(--color-violet-500)', 'var(--color-blue-500)', 'var(--color-green-500)'],
+   			stroke: { curve: 'smooth', width: 2 },
+   			dataLabels: { enabled: false },
+   			legend: { show: true, position: 'top', horizontalAlign: 'right', fontSize: '11px', labels: { colors: 'var(--color-secondary-foreground)' }, markers: { size: 5 } },
+   			xaxis: Object.assign({ type: 'numeric', tickAmount: 8, decimalsInFloat: 0 }, baseAxis()),
+   			yaxis: baseY(),
+   			markers: { size: 0, hover: { size: 4 } },
+   			grid: baseGrid(),
+   			tooltip: { y: { formatter: function (v) { return v.toFixed(3); } }, x: { formatter: function (v) { return 'Ep ' + Math.round(v); } } }
+   		};
+   		chart = new ApexCharts(element, options);
+   		chart.render();
+   	}
+
+   	function update(mode) {
+   		var subtitle = document.querySelector('#run_chart_subtitle');
+   		var value = document.querySelector('#run_chart_value');
+   		if (mode === 'multitask') {
+   			if (subtitle) subtitle.textContent = 'Δ reward per task · trained − baseline · T3 excluded';
+   			if (value) value.textContent = '3 / 4 improved';
+   			renderMultitask();
+   		} else if (mode === 'components') {
+   			if (subtitle) subtitle.textContent = 'Reward decomposition · F-beta + Specificity + Reasoning';
+   			if (value) value.textContent = '3 signals';
+   			renderComponents();
+   		} else {
+   			if (subtitle) subtitle.textContent = 'Peak reward · T3 claim audit · 416 episodes';
+   			if (value) value.textContent = '0.905';
+   			renderSmoke();
+   		}
+   	}
+
+   	function init() {
+   		element = document.querySelector('#smoke_run_chart');
+   		if (!element || typeof ApexCharts === 'undefined') return;
+   		update('smoke');
+   		var radios = document.querySelectorAll('input[name="run-mode"]');
+   		Array.prototype.forEach.call(radios, function (input) {
+   			input.addEventListener('change', function () {
+   				if (this.checked) update(this.value);
+   			});
+   		});
+   	}
+
+   	if (document.readyState === 'loading') {
+   		document.addEventListener('DOMContentLoaded', init);
+   	} else {
+   		init();
+   	}
+   })();
+  </script>
+  <!-- End of Scripts -->
+ </body>
+</html>

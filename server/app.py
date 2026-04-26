@@ -1,361 +1,293 @@
 """
-server/app.py — FastAPI application for ScholarEnv.
+server/app.py — ScholarEnv FastAPI server.
 
-Exposes the five endpoints required by OpenEnv / hackathon validation:
-  POST /reset        — start a new episode
-  POST /step         — submit an action
-  GET  /state        — inspect current episode state
-  GET  /health       — liveness probe (returns 200)
-  GET  /action_space — action schema documentation
-  GET  /tasks        — list all available tasks
+OpenEnv compliance (spec_version: 1):
+  - Uses create_app() from openenv.core.env_server.http_server
+  - ScholarEnvironment.SUPPORTS_CONCURRENT_SESSIONS = True
+  - max_concurrent_envs=4 (configurable via MAX_ENVS env var)
 
-All request/response bodies are JSON.
-CORS is enabled for HuggingFace Spaces embedding.
+Standard OpenEnv endpoints (from create_app):
+  POST /reset  GET /state  GET /health  GET /schema  WS /ws
 
-Usage:
-  uvicorn server.app:app --host 0.0.0.0 --port 7860
+Custom endpoints added:
+  GET  /             — demo HTML
+  GET  /dashboard    — reward curve
+  POST /reset_with_paper — training shortcut
+
+Authors: Nensi Pansuriya · Krushna Parmar · Ishita Bhojani
 """
 from __future__ import annotations
-
-import os
-import sys
+import json, os, sys, time
+from collections import OrderedDict
 from pathlib import Path
 
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse
-
-# Ensure root is on path when running from server/
 _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+try:
+    from openenv.core.env_server.http_server import create_app
+    _OPENENV_AVAILABLE = True
+except ImportError:
+    _OPENENV_AVAILABLE = False
+    from fastapi import FastAPI
+    def create_app(env_cls, action_cls, obs_cls, **kwargs):
+        return FastAPI(title="ScholarEnv (standalone)", version="2.0.0")
+
+from fastapi import Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse
+
 from server.environment import ScholarEnvironment, TASK_CONFIG
+try:
+    from models import ScholarAction, ScholarObservation
+except ImportError:
+    from ..models import ScholarAction, ScholarObservation
 
-# ── App setup ─────────────────────────────────────────────────────────────────
+_MAX_ENVS = int(os.environ.get("MAX_ENVS", "4"))
+_DATA_DIR  = os.environ.get("DATA_DIR", "data")
 
-app = FastAPI(
-    title="ScholarEnv",
-    description=(
-        "OpenEnv environment for scholarly integrity verification. "
-        "Three tasks: formatting compliance, internal consistency, "
-        "claim-evidence audit."
-    ),
-    version="0.4.0",
+app = create_app(
+    ScholarEnvironment,
+    ScholarAction,
+    ScholarObservation,
+    env_name="scholar-env",
+    max_concurrent_envs=_MAX_ENVS,
 )
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+_REWARD_HISTORY: list[dict] = []
+MAX_HISTORY = 500
+_SESSIONS: OrderedDict[str, ScholarEnvironment] = OrderedDict()
+MAX_SESSIONS = 128
 
-# Single environment instance shared across requests
-# (stateful — one active episode at a time, sufficient for hackathon eval)
-_ENV: ScholarEnvironment | None = None
-
-
-def get_env() -> ScholarEnvironment:
-    global _ENV
-    if _ENV is None:
-        data_dir = os.environ.get("DATA_DIR", "data")
-        _ENV = ScholarEnvironment(data_dir=data_dir)
-    return _ENV
-
-
-# ── Health ────────────────────────────────────────────────────────────────────
-
-@app.get("/", response_class=HTMLResponse)
-async def root() -> HTMLResponse:
-    """Landing page — shows environment overview and API reference."""
-    html = """<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ScholarEnv — OpenEnv Research Integrity</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-         background: #0f1117; color: #e0e0e0; padding: 40px 20px; }
-  .container { max-width: 860px; margin: 0 auto; }
-  h1 { font-size: 2.2rem; color: #fff; margin-bottom: 8px; }
-  h1 span { color: #f97316; }
-  .subtitle { color: #9ca3af; margin-bottom: 32px; font-size: 1.05rem; }
-  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px;
-           font-size: 0.75rem; font-weight: 600; margin-right: 6px; }
-  .badge-blue { background: #1d4ed8; color: #fff; }
-  .badge-green { background: #166534; color: #86efac; }
-  .badge-orange { background: #7c2d12; color: #fed7aa; }
-  .badges { margin-bottom: 28px; }
-  h2 { font-size: 1.2rem; color: #f97316; margin: 28px 0 12px; 
-       border-bottom: 1px solid #1f2937; padding-bottom: 6px; }
-  .task-card { background: #1f2937; border-radius: 8px; padding: 16px 20px;
-               margin-bottom: 10px; border-left: 4px solid #f97316; }
-  .task-card h3 { font-size: 1rem; color: #fff; margin-bottom: 4px; }
-  .task-card p { color: #9ca3af; font-size: 0.875rem; }
-  .task-meta { display: flex; gap: 16px; margin-top: 6px; font-size: 0.8rem; color: #6b7280; }
-  code { background: #111827; padding: 2px 6px; border-radius: 4px;
-         font-family: monospace; font-size: 0.875rem; color: #86efac; }
-  .api-block { background: #111827; border-radius: 8px; padding: 16px 20px;
-               margin-bottom: 10px; font-family: monospace; font-size: 0.82rem; color: #d1d5db; }
-  .api-block .method { color: #60a5fa; font-weight: bold; margin-right: 8px; }
-  .api-block .path { color: #f97316; }
-  .links { display: flex; gap: 12px; margin-bottom: 28px; flex-wrap: wrap; }
-  .link-btn { background: #1f2937; border: 1px solid #374151; color: #e0e0e0;
-              padding: 8px 16px; border-radius: 6px; text-decoration: none;
-              font-size: 0.875rem; transition: background 0.2s; }
-  .link-btn:hover { background: #374151; }
-  .authors { color: #9ca3af; font-size: 0.875rem; margin-top: 40px;
-             border-top: 1px solid #1f2937; padding-top: 16px; }
-</style>
-</head>
-<body>
-<div class="container">
-  <h1>🔬 <span>Scholar</span>Env</h1>
-  <p class="subtitle">The first RL environment for AI-assisted peer review and scholarly integrity verification.</p>
-  
-  <div class="badges">
-    <span class="badge badge-blue">OpenEnv v0.4.0</span>
-    <span class="badge badge-green">4 Tasks</span>
-    <span class="badge badge-green">Running</span>
-    <span class="badge badge-orange">Meta × PyTorch Hackathon</span>
-  </div>
-
-  <div class="links">
-    <a class="link-btn" href="/docs">📖 Interactive API Docs (Swagger)</a>
-    <a class="link-btn" href="/health">❤️ Health Check</a>
-    <a class="link-btn" href="/tasks">📋 List Tasks</a>
-    <a class="link-btn" href="/state">📊 Current State</a>
-  </div>
-
-  <h2>Available Tasks</h2>
-
-  <div class="task-card">
-    <h3>formatting_compliance <span class="badge badge-green">EASY</span></h3>
-    <p>Fix IEEE manuscript formatting violations — abstract length, section order, citation style, author block.</p>
-    <div class="task-meta"><span>Max steps: 3</span><span>Frontier baseline: 0.80–0.95</span></div>
-  </div>
-
-  <div class="task-card">
-    <h3>internal_consistency <span class="badge badge-blue">MEDIUM</span></h3>
-    <p>Find internal contradictions — number mismatches, nonexistent references, inconsistent contribution counts.</p>
-    <div class="task-meta"><span>Max steps: 4</span><span>Frontier baseline: 0.40–0.65</span></div>
-  </div>
-
-  <div class="task-card" style="border-left-color: #ef4444;">
-    <h3>claim_evidence_audit <span class="badge badge-orange">HARD</span></h3>
-    <p>Find where text claims don't match table values. RL training value: frontier LLMs score 0.20–0.45 with no training.</p>
-    <div class="task-meta"><span>Max steps: 6</span><span>Frontier baseline: <strong style="color:#f97316">0.20–0.45</strong></span></div>
-  </div>
-
-  <div class="task-card">
-    <h3>citation_verification <span class="badge badge-blue">MEDIUM</span></h3>
-    <p>Identify ghost citations (fabricated) and misattributed references. SQLite cache stores verified citations across episodes.</p>
-    <div class="task-meta"><span>Max steps: 8</span><span>Frontier baseline: 0.35–0.60</span></div>
-  </div>
-
-  <h2>API Usage</h2>
-
-  <div class="api-block">
-    <span class="method">POST</span><span class="path">/reset</span>&nbsp;&nbsp;
-    {"task_id": "formatting_compliance"}
-  </div>
-  <div class="api-block">
-    <span class="method">POST</span><span class="path">/step</span>&nbsp;&nbsp;&nbsp;&nbsp;
-    {"task": "claim_evidence_audit", "action_type": "query_section", "section_name": "results"}
-  </div>
-  <div class="api-block">
-    <span class="method">POST</span><span class="path">/step</span>&nbsp;&nbsp;&nbsp;&nbsp;
-    {"task": "claim_evidence_audit", "action_type": "submit_findings", "findings": [...]}
-  </div>
-  <div class="api-block">
-    <span class="method">GET</span>&nbsp;<span class="path">/state</span>&nbsp;&nbsp;&nbsp;
-    Returns current episode state and curriculum summary
-  </div>
-
-  <p class="authors">
-    <strong>Nensi Pansuriya · Krushna Parmar · Ishita Bhojani</strong><br>
-    Meta × PyTorch OpenEnv Hackathon · Round 1 · April 2026
-  </p>
-</div>
-</body>
-</html>"""
-    return HTMLResponse(content=html)
-
+def _get_or_create_session(session_id: str) -> ScholarEnvironment:
+    if session_id not in _SESSIONS:
+        if len(_SESSIONS) >= MAX_SESSIONS:
+            _SESSIONS.popitem(last=False)
+        _SESSIONS[session_id] = ScholarEnvironment(data_dir=_DATA_DIR)
+    else:
+        _SESSIONS.move_to_end(session_id)
+    return _SESSIONS[session_id]
 
 @app.get("/health")
-async def health() -> dict:
-    """Liveness probe — must return 200 for hackathon validation."""
-    env = get_env()
-    return {
-        "status": "ok",
-        "version": "0.4.0",
-        "corpus_size": len(env.corpus),
-        "tasks": list(TASK_CONFIG.keys()),
-    }
+async def health():
+    return {"status":"ok","version":"2.0.0","active_sessions":len(_SESSIONS),
+            "max_sessions":MAX_SESSIONS,"tasks":list(TASK_CONFIG.keys()),
+            "openenv_core":_OPENENV_AVAILABLE}
 
-
-# ── Reset ─────────────────────────────────────────────────────────────────────
-
-@app.post("/reset")
-async def reset(request: Request) -> JSONResponse:
-    """
-    Start a new episode.
-
-    Body (JSON):
-      { "task_id": "formatting_compliance" }   ← default if omitted
-
-    Returns:
-      { "observation": {...}, "info": {...} }
-    """
-    body    = await request.json() if request.headers.get("content-type") else {}
-    task_id = body.get("task_id", "formatting_compliance")
-    result  = get_env().reset(task_id=task_id)
+@app.post("/reset_with_paper")
+async def reset_with_paper(request: Request) -> JSONResponse:
+    try: body = await request.json()
+    except: body = {}
+    task_id    = body.get("task_id", "claim_evidence_audit")
+    session_id = body.get("session_id", f"s_{time.time_ns()}")
+    paper_dict = body.get("paper", {})
+    if task_id not in TASK_CONFIG:
+        return JSONResponse({"error": f"Unknown task_id '{task_id}'"}, status_code=200)
+    env = _get_or_create_session(session_id)
+    if paper_dict:
+        try:
+            from corpus import Paper
+            paper = Paper(
+                id=paper_dict.get("id","injected"), title=paper_dict.get("title",""),
+                source=paper_dict.get("source","training"), license=paper_dict.get("license","synthetic"),
+                sections=paper_dict.get("sections",{}), tables=paper_dict.get("tables",{}),
+                figures=paper_dict.get("figures",{}), ground_truth=paper_dict.get("ground_truth",{}),
+                difficulty_score=paper_dict.get("difficulty_score",0.5),
+                badly_formatted_text=paper_dict.get("badly_formatted_text"),
+            )
+            env.corpus.papers[paper.id] = paper
+            env._use_procedural = False
+            env._injected_paper_id = paper.id
+        except Exception: pass
+    result = env.reset(task_id=task_id, session_id=session_id)
+    result["session_id"] = session_id
     return JSONResponse(content=result, status_code=200)
-
-
-# ── Step ──────────────────────────────────────────────────────────────────────
 
 @app.post("/step")
-async def step(request: Request) -> JSONResponse:
-    """
-    Submit one action.
-
-    Body (JSON) — Task 1 example:
-      {
-        "task": "formatting_compliance",
-        "formatted_text": "..."
-      }
-
-    Body (JSON) — Task 2/3 navigation example:
-      {
-        "task": "internal_consistency",
-        "action_type": "query_section",
-        "section_name": "results"
-      }
-
-    Body (JSON) — Task 2/3 submit example:
-      {
-        "task": "claim_evidence_audit",
-        "action_type": "submit_findings",
-        "findings": [
-          {
-            "type": "table_text_mismatch",
-            "location": "results",
-            "claim": "Table 2 shows 87% accuracy",
-            "contradicts": "Table 2 value is 79%",
-            "table_id": "Table 2",
-            "table_value": "79%"
-          }
-        ]
-      }
-
-    Returns:
-      { "observation": {...}, "reward": float, "done": bool, "info": {...} }
-    """
-    try:
-        body = await request.json()
-    except Exception:
-        return JSONResponse(
-            content={"error": "Request body must be valid JSON."},
-            status_code=400,
-        )
-    result = get_env().step(body)
-    # Always return 200 with a valid reward so evaluator never gets 400
-    if "error" in result:
-        result.setdefault("reward", 1e-4)
-        result.setdefault("done", True)
-        result.setdefault("info", {})
-        result.setdefault("observation", {"task_id": "unknown", "task_description": "",
-                                           "paper_id": "none", "step_count": 0, "max_steps": 1})
+async def step_action(request: Request) -> JSONResponse:
+    try: body = await request.json()
+    except: body = {}
+    task_id    = body.get("task", body.get("task_id","claim_evidence_audit"))
+    session_id = body.get("session_id","default")
+    env = _get_or_create_session(session_id)
+    result = env.step(body)
+    reward = result.get("reward")
+    if reward is not None:
+        _REWARD_HISTORY.append({"t":time.time(),"task":task_id,"reward":float(reward),"session":session_id})
+        if len(_REWARD_HISTORY) > MAX_HISTORY: _REWARD_HISTORY.pop(0)
+    # G4: Save episode transcript on terminal step
+    if result.get("done") and result.get("info", {}).get("action_log"):
+        _save_transcript(session_id, task_id,
+                         result["info"]["action_log"], float(reward or 0))
     return JSONResponse(content=result, status_code=200)
 
-
-# ── State ─────────────────────────────────────────────────────────────────────
+@app.post("/reset")
+async def reset_env(request: Request) -> JSONResponse:
+    try: body = await request.json()
+    except: body = {}
+    task_id    = body.get("task_id","claim_evidence_audit")
+    session_id = body.get("session_id", f"s_{time.time_ns()}")
+    if task_id not in TASK_CONFIG:
+        return JSONResponse({"error":f"Unknown task_id '{task_id}'"}, status_code=200)
+    env = _get_or_create_session(session_id)
+    result = env.reset(task_id=task_id, session_id=session_id)
+    result["session_id"] = session_id
+    return JSONResponse(content=result, status_code=200)
 
 @app.get("/state")
-async def state() -> dict:
-    """Return current episode state (for debugging and logging)."""
-    return get_env().state()
-
-
-# ── Action space ──────────────────────────────────────────────────────────────
-
-@app.get("/action_space")
-async def action_space() -> dict:
-    return {
-        "type": "structured",
-        "discriminator": "task",
-        "variants": {
-            "formatting_compliance": {
-                "fields": {
-                    "task": "Literal['formatting_compliance']",
-                    "formatted_text": "str — complete reformatted manuscript",
-                }
-            },
-            "internal_consistency": {
-                "fields": {
-                    "task":         "Literal['internal_consistency']",
-                    "action_type":  "query_section | submit_findings",
-                    "section_name": "str (for query_section)",
-                    "findings":     "list[dict] (for submit_findings)",
-                }
-            },
-            "claim_evidence_audit": {
-                "fields": {
-                    "task":         "Literal['claim_evidence_audit']",
-                    "action_type":  "query_section | check_table | extract_claims | submit_findings",
-                    "section_name": "str",
-                    "table_id":     "str (e.g. 'Table 1')",
-                    "findings":     "list[dict]",
-                }
-            },
-        },
-        "finding_schema": {
-            "required": ["type", "location", "claim", "contradicts"],
-            "optional_for_task3": ["table_id", "table_value"],
-            "types": [
-                "number_mismatch",
-                "missing_reference",
-                "contribution_count",
-                "table_caption_mismatch",
-                "table_text_mismatch",
-            ],
-        },
-    }
-
-
-# ── Tasks ─────────────────────────────────────────────────────────────────────
+async def state(session_id: str = "default"):
+    if session_id not in _SESSIONS: return {"status":"idle","session_id":session_id}
+    env = _SESSIONS[session_id]
+    s = env.state() if hasattr(env,"state") else {}
+    s["n_sessions"] = len(_SESSIONS)
+    return s
 
 @app.get("/tasks")
-async def tasks() -> dict:
-    return {
-        "tasks": [
-            {
-                "id":          tid,
-                "description": cfg["description"][:120] + "...",
-                "max_steps":   cfg["max_steps"],
-                "navigable":   cfg["allows_navigation"],
-            }
-            for tid, cfg in TASK_CONFIG.items()
-        ]
-    }
+async def tasks():
+    return {tid:{"description":cfg["description"],"max_steps":cfg["max_steps"]}
+            for tid,cfg in TASK_CONFIG.items()}
+
+@app.get("/", response_class=HTMLResponse)
+async def demo_ui():
+    demo = Path(_ROOT)/"demo.html"
+    if demo.exists(): return HTMLResponse(content=demo.read_text())
+    return HTMLResponse(content="<h1>ScholarEnv</h1><p><a href='/docs'>API Docs</a> | <a href='/dashboard'>Dashboard</a></p>")
+
+_ASSET_DIR = Path(_ROOT) / "assets"
 
 
-# ── Entry point (required by openenv spec) ────────────────────────────────────
+@app.get("/assets/{name:path}")
+async def serve_asset(name: str):
+    """Phase D6 (v6): static asset route for the Saccade-RL GIF + reward curve PNG."""
+    from fastapi.responses import FileResponse, PlainTextResponse
+    safe = (_ASSET_DIR / name).resolve()
+    if not str(safe).startswith(str(_ASSET_DIR.resolve())) or not safe.exists():
+        return PlainTextResponse("not found", status_code=404)
+    return FileResponse(str(safe))
 
-def main() -> None:
-    """Server entry point — called by [project.scripts] and openenv runner."""
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard():
+    """v6 dashboard: live reward stream + (when present) Saccade-RL GIF + curve PNG.
+
+    Phase D6 stub: the static assets/saccade_comparison.gif and
+    assets/reward_curve.png are produced by the notebook (Cells 10/12) and
+    rsync'd to the HF Space.  Full interactive dashboard is post-hackathon.
+    """
+    recent = _REWARD_HISTORY[-200:]
+    avg = sum(r["reward"] for r in recent) / len(recent) if recent else 0
+    gif_exists  = (_ASSET_DIR / "saccade_comparison.gif").exists()
+    curve_exists = (_ASSET_DIR / "reward_curve.png").exists()
+    tokens_exists = (_ASSET_DIR / "tokens_to_find.png").exists()
+    static_html = ""
+    if gif_exists:
+        static_html += (
+            '<div class="card"><div class="label">Saccade RL — baseline vs trained reading order</div>'
+            '<img src="/assets/saccade_comparison.gif" style="width:100%;border-radius:6px;margin-top:8px"></div>'
+        )
+    if curve_exists:
+        static_html += (
+            '<div class="card"><div class="label">Reward curve (training)</div>'
+            '<img src="/assets/reward_curve.png" style="width:100%;border-radius:6px;margin-top:8px"></div>'
+        )
+    if tokens_exists:
+        static_html += (
+            '<div class="card"><div class="label">Tokens-to-find-first-correct (per task)</div>'
+            '<img src="/assets/tokens_to_find.png" style="width:100%;border-radius:6px;margin-top:8px"></div>'
+        )
+    if not static_html:
+        static_html = (
+            '<div class="card" style="border:1px dashed #374151;color:#9ca3af">'
+            'Saccade-RL GIF, reward curve, and tokens-to-find chart will appear '
+            'here once the training notebook has rsync\'d <code>assets/*.png|gif</code> '
+            'to the Space. (Full interactive dashboard deferred — see README §Roadmap.)'
+            '</div>'
+        )
+    return HTMLResponse(content=f"""<!DOCTYPE html><html><head><title>ScholarEnv Dashboard</title>
+<style>body{{font-family:system-ui;background:#0f1117;color:#e5e7eb;margin:0;padding:20px;max-width:1100px;margin-left:auto;margin-right:auto}}
+.card{{background:#1f2937;border-radius:8px;padding:16px;margin:12px 0}}
+.big-num{{font-size:2.5rem;font-weight:700;color:#f97316}}
+.label{{font-size:0.85rem;color:#9ca3af}}h1{{color:#f97316}}</style></head><body>
+<h1>ScholarEnv Dashboard</h1>
+<p style="color:#9ca3af;margin-top:-10px">
+  Saccade RL: teaching a 1.5B model to read papers like a senior reviewer — out of order, evidence-first.
+</p>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+<div class="card"><div class="label">Episodes</div><div class="big-num">{len(_REWARD_HISTORY)}</div></div>
+<div class="card"><div class="label">Avg Reward</div><div class="big-num">{avg:.3f}</div></div>
+<div class="card"><div class="label">Sessions</div><div class="big-num">{len(_SESSIONS)}</div></div>
+</div>
+{static_html}
+<div class="card"><div class="label">Live reward stream (claim_evidence_audit)</div>
+<canvas id="rc"></canvas></div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+fetch('/_reward_data').then(r=>r.json()).then(d=>{{
+  new Chart(document.getElementById('rc').getContext('2d'),{{
+    type:'line',data:{{labels:d.map((_,i)=>i+1),datasets:[{{label:'Reward',
+    data:d.map(x=>x.reward),borderColor:'#f97316',backgroundColor:'rgba(249,115,22,0.1)',
+    tension:0.3,fill:true,pointRadius:2}}]}},
+    options:{{scales:{{y:{{min:0,max:1}}}},plugins:{{legend:{{display:true}}}}}}
+  }});
+}});
+</script></body></html>""")
+
+@app.get("/_reward_data")
+async def reward_data():
+    filtered = [r for r in _REWARD_HISTORY if r.get("task")=="claim_evidence_audit"]
+    return JSONResponse(content=filtered[-200:])
+
+def main(host="0.0.0.0", port=7860):
     import uvicorn
-    uvicorn.run(
-        "server.app:app",
-        host="0.0.0.0",
-        port=7860,
-        workers=1,
-    )
+    uvicorn.run(app, host=host, port=int(os.environ.get("PORT", port)))
 
+if __name__=="__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--host", default="0.0.0.0")
+    parser.add_argument("--port", type=int, default=7860)
+    args = parser.parse_args()
+    main(host=args.host, port=args.port)
 
-if __name__ == "__main__":
-    main()
+# ── /transcripts — G4: action strategy logger ────────────────────────────────
+import os as _os
+_TRANSCRIPT_PATH = "/tmp/scholarenv_transcripts.jsonl"
+
+@app.get("/transcripts")
+async def transcripts(limit: int = 20):
+    """
+    G4: Episode transcripts showing agent action sequences.
+    Enables behavioral comparison: untrained (random) vs trained (strategic).
+    Each record: {action_sequence, sections_order, final_reward, n_steps}
+    """
+    if not _os.path.exists(_TRANSCRIPT_PATH):
+        return JSONResponse(content={"transcripts": [], "total": 0})
+    records = []
+    try:
+        with open(_TRANSCRIPT_PATH) as f:
+            for line in f:
+                try: records.append(json.loads(line.strip()))
+                except Exception: pass
+    except Exception: pass
+    return JSONResponse(content={"transcripts": records[-limit:], "total": len(records)})
+
+def _save_transcript(session_id: str, task_id: str,
+                     action_log: list, final_reward: float) -> None:
+    """Persist one episode transcript for behavioral dashboard."""
+    try:
+        import time as _t
+        record = {
+            "session_id":      session_id,
+            "task_id":         task_id,
+            "action_sequence": [a["action_type"] + ":" + a.get("target","") for a in action_log],
+            "sections_order":  [a.get("target","") for a in action_log
+                                 if a.get("action_type") == "query_section"],
+            "final_reward":    round(final_reward, 4),
+            "n_steps":         len(action_log),
+            "ts":              _t.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+        with open(_TRANSCRIPT_PATH, "a") as f:
+            f.write(json.dumps(record) + "\n")
+    except Exception: pass

@@ -1,8 +1,52 @@
+# Python
 __pycache__
 *.pyc
+*.pyo
 *.egg-info
+
+# VCS / IDE
 .git
+.gitignore
+.cursor/
+.vscode/
+.idea/
+
+# Local env
 .env
 venv/
 .venv/
+
+# Build / cache outputs
 baseline_scores.json
+*.zip
+*.tar.gz
+node_modules/
+
+# Notebooks: training-only, not needed at serve time
+*.ipynb
+.ipynb_checkpoints/
+
+# Reference repositories — DO NOT ship competitor code to the HF Space.
+# These are several hundred MB and would silently bloat the image.
+refs/
+
+# Author-only / handoff documents
+friends_advice_from_cursor.txt
+SCHOLARENV_COMPLETE.md
+ZED_HANDOFF.md
+*.docx
+
+# Local scratch files (anything starting with underscore at the repo root)
+_*.py
+_*.txt
+_*.md
+_*.json
+
+# Plans + transcripts — local-only artefacts, never deploy
+.plans/
+agent-transcripts/
+
+# Local LoRA / model snapshots — pulled from HF at runtime instead
+lora_v*/
+adapters/
+*.safetensors

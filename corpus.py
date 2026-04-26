@@ -98,6 +98,26 @@ class Paper:
         return "\n".join(parts)
 
 
+    @classmethod
+    def from_dict(cls, raw: dict) -> "Paper":
+        """
+        Instantiate a Paper directly from a dict (e.g. parsed from JSON string).
+        Used by reward_fn in training to avoid disk I/O per rollout.
+        """
+        return cls(
+            id=raw.get("id", "gen_unknown"),
+            title=raw.get("title", "Untitled"),
+            source=raw.get("source", "procedural"),
+            license=raw.get("license", "synthetic"),
+            sections=raw.get("sections", {}),
+            tables=raw.get("tables", {}),
+            figures=raw.get("figures", {}),
+            ground_truth=raw.get("ground_truth", {}),
+            difficulty_score=raw.get("difficulty_score", 0.5),
+            badly_formatted_text=raw.get("badly_formatted_text"),
+        )
+
+
 class PaperCorpus:
     """Loads all paper JSONs from a directory and provides dict-like access."""
 
@@ -143,3 +163,4 @@ class PaperCorpus:
 
     def __repr__(self) -> str:
         return f"PaperCorpus({len(self.papers)} papers)"
+

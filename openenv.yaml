@@ -1,136 +1,26 @@
+spec_version: 1
 name: scholar-env
-version: "0.4.0"
-description: >
-  ScholarEnv is an OpenEnv environment simulating the scholarly publishing
-  integrity pipeline. An AI agent acts as a research integrity auditor,
-  progressing from formatting compliance through internal consistency checking,
-  claim-evidence auditing, and citation verification — the first RL environment
-  for AI-assisted peer review. Task 3 scores 0.20–0.45 for frontier models,
-  providing genuine training signal that prompting alone cannot achieve.
+type: space
+runtime: fastapi
+app: server.app:app
+port: 7860
 
-domain: academic_publishing
-license: Apache-2.0
-baseline_script: inference.py
-
-authors:
-  - name: Nensi Pansuriya
-  - name: Krushna Parmar
-  - name: Ishita Bhojani
-
-tags:
-  - openenv
-  - nlp
-  - document-understanding
-  - research-integrity
-  - peer-review
-  - academic
-  - rl-environment
-  - citation-verification
-
+# v6 — five tasks (T5 added in Phase C3)
 tasks:
   - id: formatting_compliance
-    name: "IEEE Manuscript Formatting Compliance"
-    description: >
-      Reformat a badly-formatted manuscript to IEEE style. Fix title,
-      abstract length, section order, citations, captions, author block.
-    difficulty: easy
-    interaction_type: single_shot
-    max_steps: 3
-    expected_frontier_score: "0.80-0.95"
-    success_threshold: 0.80
-
+    description: Reformat a manuscript to IEEE style (PRS, 3-stage)
   - id: internal_consistency
-    name: "Internal Consistency Verification"
-    description: >
-      Find internal contradictions — number mismatches, nonexistent
-      figure/table references, inconsistent contribution counts.
-      Multi-step navigation + submit. F-beta rewards precision.
-    difficulty: medium
-    interaction_type: multi_step
-    max_steps: 4
-    expected_frontier_score: "0.40-0.65"
-    success_threshold: 0.50
-
+    description: Find numerical contradictions across sections
   - id: claim_evidence_audit
-    name: "Claim-Evidence Discrepancy Audit"
-    description: >
-      Find places where text claims don't match referenced table values.
-      Strategic multi-step navigation required. PBRS intermediate rewards.
-      RL discovers optimal traversal strategy — prompting cannot.
-    difficulty: hard
-    interaction_type: multi_step
-    max_steps: 6
-    expected_frontier_score: "0.20-0.45"
-    success_threshold: 0.35
-
+    description: Find text-vs-table claim mismatches (the core RL contribution)
   - id: citation_verification
-    name: "Reference Citation Verification"
-    description: >
-      Verify whether cited papers actually exist and are correctly attributed.
-      Agent checks citations via check_citation actions (CrossRef/arXiv DB),
-      then submits verdicts (valid/ghost/misattributed). SQLite cache
-      accumulates verified citations across episodes.
-    difficulty: medium
-    interaction_type: multi_step
-    max_steps: 8
-    expected_frontier_score: "0.35-0.60"
-    success_threshold: 0.50
+    description: Identify ghost / misattributed / retracted references
+  - id: prompt_injection_audit
+    description: Catch hidden adversarial directives planted in any section (zero-shot transfer target)
 
-action_space:
-  type: structured
-  description: >
-    Tasks 1: FormattingAction — submit full formatted manuscript text.
-    Tasks 2/3: ScholarAction — navigate (query_section, check_table,
-    extract_claims) then submit_findings.
-    Task 4: CitationAction — check_citation then submit_verdicts.
-  discriminator_field: task
+authors:
+  - Nensi Pansuriya
+  - Krushna Parmar
+  - Ishita Bhojani
 
-observation_space:
-  type: structured
-  fields:
-    - {name: task_id, type: string}
-    - {name: task_description, type: string}
-    - {name: paper_id, type: string}
-    - {name: manuscript_text, type: string, note: "Task 1 initial obs only"}
-    - {name: style_guide, type: object, note: "Task 1 IEEE rules"}
-    - {name: available_sections, type: array}
-    - {name: available_tables, type: array}
-    - {name: available_references, type: array, note: "Task 4"}
-    - {name: current_section_content, type: string}
-    - {name: current_table_content, type: object}
-    - {name: extracted_claims, type: array}
-    - {name: citation_data, type: object, note: "Task 4 citation details"}
-    - {name: findings_so_far, type: array}
-    - {name: step_count, type: integer}
-    - {name: max_steps, type: integer}
-    - {name: feedback, type: string}
-    - {name: hint, type: string}
-    - {name: cumulative_score, type: float}
-
-reward:
-  type: continuous
-  range: [0.0, 1.0]
-  description: >
-    Task 1: Progressive Reward Shaping (PRS) 3-stage unlock.
-    Tasks 2/3: F-beta(beta=0.5) + PBRS intermediate + coverage bonus.
-    Task 4: precision_valid + recall_invalid + evidence_score.
-
-endpoints:
-  reset: POST /reset
-  step: POST /step
-  state: GET /state
-  health: GET /health
-  action_space: GET /action_space
-  tasks: GET /tasks
-
-docker:
-  build: docker build -t scholar-env .
-  run: docker run -p 7860:7860 scholar-env
-
-huggingface:
-  space: scholar-env
-  sdk: docker
-  tags:
-    - openenv
-    - research-integrity
-    - rl-environment
+baseline_script: inference.py

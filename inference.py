@@ -21,10 +21,28 @@ import httpx
 from openai import OpenAI
 
 # ── Environment variables — use getenv with defaults so evaluator doesn't crash
+# ── Environment variables — auto-detect local vs HF Space ────────────────────
+# G6: Judges can run inference.py locally without setting any env vars.
+# Priority: env var > local server (if running) > HF Space
+def _detect_space_url() -> str:
+    env_url = os.getenv("HF_SPACE_URL", "")
+    if env_url:
+        return env_url.rstrip("/")
+    # Try local server first (common during judging)
+    local = "http://localhost:7860"
+    try:
+        import urllib.request
+        urllib.request.urlopen(f"{local}/health", timeout=2)
+        return local
+    except Exception:
+        pass
+    # Fall back to HF Space
+    return "https://flyingmaverick-scholar-env.hf.space"
+
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME   = os.getenv("MODEL_NAME",   "Qwen/Qwen2.5-72B-Instruct")
 API_KEY      = os.getenv("HF_TOKEN",     os.getenv("OPENAI_API_KEY", ""))
-SPACE_URL    = os.getenv("HF_SPACE_URL", "https://flyingmaverick-scholar-env.hf.space").rstrip("/")
+SPACE_URL    = _detect_space_url()
 
 TEMPERATURE        = 0.1
 MAX_TOKENS         = 4000
@@ -128,14 +146,21 @@ async def env_reset(task_id: str) -> dict:
 
 
 async def env_step(action: dict) -> dict:
+    """
+    POST /step to the env.  On HTTP/transport failure we MUST raise so the
+    structured-log scorer in Phase 2 sees `error=<exc>` on the [STEP] line.
+    The previous silent fallback to {"reward": 0.5001, "done": True} masked
+    a down HF Space as "all tasks ~0.50" and let the agent appear to work.
+    The outer task runners catch the exception and emit a clean [END] line.
+    """
     try:
         async with httpx.AsyncClient(timeout=120.0) as c:
             r = await c.post(f"{SPACE_URL}/step", json=action)
             r.raise_for_status()
             return r.json()
     except Exception as e:
-        print(f"[DEBUG] env_step error: {e}", flush=True)
-        return {"observation": {}, "reward": 0.5001, "done": True, "info": {}}
+        print(f"[ERROR] env_step failed: {type(e).__name__}: {e}", flush=True)
+        raise
 
 
 # ── Task 1: formatting_compliance ─────────────────────────────────────────────

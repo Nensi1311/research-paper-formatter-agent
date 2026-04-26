@@ -41,8 +41,14 @@ class FormattingAction(BaseModel):
 
 
 class ScholarAction(BaseModel):
-    """Tasks 2 & 3: navigate the paper or submit findings."""
-    task: Literal["internal_consistency", "claim_evidence_audit"]
+    """Tasks 2, 3 & 5: navigate the paper or submit findings.
+
+    T5 (prompt_injection_audit) re-uses the same action shape as T2/T3 — the
+    agent navigates with query_section then submits with submit_findings,
+    where each finding is {type:"prompt_injection", location, text}.
+    """
+    task: Literal["internal_consistency", "claim_evidence_audit",
+                  "prompt_injection_audit"]
     action_type: Literal[
         "query_section",
         "check_table",
