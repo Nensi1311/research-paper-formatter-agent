@@ -37,9 +37,35 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
   <link href="static/assets/media/app/favicon-16x16.png" rel="icon" sizes="16x16" type="image/png"/>
   <link href="static/assets/media/app/favicon.ico" rel="shortcut icon"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-  <link href="static/assets/vendors/apexcharts/apexcharts.css" rel="stylesheet"/>
-  <link href="static/assets/vendors/keenicons/styles.bundle.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/apexcharts@3.49.1/dist/apexcharts.css" rel="stylesheet"/>
   <link href="static/assets/css/styles.css" rel="stylesheet"/>
+  <style>
+   /* Keenicons fallback via Iconify (Metronic's keenicons font is paid / not on a public CDN). */
+   .ki-filled, .ki-outline, .ki-solid, .ki-duotone {
+     display: inline-block;
+     width: 1em;
+     height: 1em;
+     background-color: currentColor;
+     -webkit-mask-size: contain;
+             mask-size: contain;
+     -webkit-mask-position: center;
+             mask-position: center;
+     -webkit-mask-repeat: no-repeat;
+             mask-repeat: no-repeat;
+     vertical-align: -0.125em;
+   }
+   .ki-arrow-up-right { -webkit-mask-image: url("https://api.iconify.design/lucide:arrow-up-right.svg"); mask-image: url("https://api.iconify.design/lucide:arrow-up-right.svg"); }
+   .ki-moon           { -webkit-mask-image: url("https://api.iconify.design/lucide:moon.svg");           mask-image: url("https://api.iconify.design/lucide:moon.svg"); }
+   .ki-sun            { -webkit-mask-image: url("https://api.iconify.design/lucide:sun.svg");            mask-image: url("https://api.iconify.design/lucide:sun.svg"); }
+   .ki-code           { -webkit-mask-image: url("https://api.iconify.design/lucide:code.svg");           mask-image: url("https://api.iconify.design/lucide:code.svg"); }
+   .ki-cloud-download { -webkit-mask-image: url("https://api.iconify.design/lucide:cloud-download.svg"); mask-image: url("https://api.iconify.design/lucide:cloud-download.svg"); }
+   .ki-rocket         { -webkit-mask-image: url("https://api.iconify.design/lucide:rocket.svg");         mask-image: url("https://api.iconify.design/lucide:rocket.svg"); }
+   .ki-verify         { -webkit-mask-image: url("https://api.iconify.design/lucide:badge-check.svg");    mask-image: url("https://api.iconify.design/lucide:badge-check.svg"); }
+   .ki-some-files     { -webkit-mask-image: url("https://api.iconify.design/lucide:files.svg");          mask-image: url("https://api.iconify.design/lucide:files.svg"); }
+   .ki-flash          { -webkit-mask-image: url("https://api.iconify.design/lucide:zap.svg");            mask-image: url("https://api.iconify.design/lucide:zap.svg"); }
+   .ki-magnifier      { -webkit-mask-image: url("https://api.iconify.design/lucide:search.svg");         mask-image: url("https://api.iconify.design/lucide:search.svg"); }
+   .ki-filter         { -webkit-mask-image: url("https://api.iconify.design/lucide:filter.svg");         mask-image: url("https://api.iconify.design/lucide:filter.svg"); }
+  </style>
  </head>
  <body class="antialiased flex h-full text-base text-foreground bg-background [--header-height:100px] data-[kt-sticky-header=on]:[--header-height:60px]">
   <!-- Theme Mode -->
@@ -1317,9 +1343,9 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
   <!-- Scripts -->
   <script src="static/assets/js/core.bundle.js">
   </script>
-  <script src="static/assets/vendors/ktui/ktui.min.js">
+  <script src="https://cdn.jsdelivr.net/npm/@keenthemes/ktui@1.2.3/dist/ktui.min.js">
   </script>
-  <script src="static/assets/vendors/apexcharts/apexcharts.min.js">
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.49.1/dist/apexcharts.min.js">
   </script>
   <script src="static/assets/js/widgets/general.js">
   </script>

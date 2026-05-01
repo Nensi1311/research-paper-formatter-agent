@@ -37,6 +37,7 @@ except ImportError:
 from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from server.environment import ScholarEnvironment, TASK_CONFIG
 try:
@@ -55,6 +56,12 @@ app = create_app(
     max_concurrent_envs=_MAX_ENVS,
 )
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# Mount the rich Metronic UI static assets (CSS / JS / media) from hf_space/static.
+_HF_SPACE_DIR = _ROOT / "hf_space"
+_HF_STATIC_DIR = _HF_SPACE_DIR / "static"
+if _HF_STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(_HF_STATIC_DIR)), name="static")
 
 _REWARD_HISTORY: list[dict] = []
 MAX_HISTORY = 500
@@ -151,8 +158,12 @@ async def tasks():
 
 @app.get("/", response_class=HTMLResponse)
 async def demo_ui():
+    """Serve the full Metronic dashboard UI from hf_space/index.html."""
+    index_html = _HF_SPACE_DIR / "index.html"
+    if index_html.exists():
+        return HTMLResponse(content=index_html.read_text(encoding="utf-8"))
     demo = Path(_ROOT)/"demo.html"
-    if demo.exists(): return HTMLResponse(content=demo.read_text())
+    if demo.exists(): return HTMLResponse(content=demo.read_text(encoding="utf-8"))
     return HTMLResponse(content="<h1>ScholarEnv</h1><p><a href='/docs'>API Docs</a> | <a href='/dashboard'>Dashboard</a></p>")
 
 _ASSET_DIR = Path(_ROOT) / "assets"

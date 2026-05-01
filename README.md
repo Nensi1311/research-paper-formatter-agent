@@ -1,3 +1,15 @@
+---
+title: ScholarEnv
+emoji: 🔬
+colorFrom: blue
+colorTo: yellow
+sdk: docker
+app_port: 7860
+pinned: false
+license: apache-2.0
+short_description: Research Paper Integrity Auditor — OpenEnv Hackathon 2026
+---
+
 # 🔬 ScholarEnv v6.7 — Research Paper Integrity Auditor
 
 > *"The first step toward integrity is being honest about the numbers."*
